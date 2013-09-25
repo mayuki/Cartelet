@@ -59,7 +59,7 @@ CSSセレクターにマッチした要素の属性を書き換えたり出力�
     var sw = new StringWriter();
     var context = new CarteletContext(content, sw);
     
-    htmlFilter.Handlers.AddWithSelector("li:nth-child(2n)", (ctx, nodeInfo) => { nodeInfo.Attributes["style"] = "color:red;"; return true; });
+    htmlFilter.AddWithSelector("li:nth-child(2n)", (ctx, nodeInfo) => { nodeInfo.Attributes["style"] = "color:red;"; return true; });
     
     htmlFilter.Execute(context, node);
     
@@ -77,8 +77,9 @@ CSSセレクターにマッチした要素の属性を書き換えたり出力�
 
 CSSセレクターの制限
 ------------------
-Selectors Level 3 (http://www.w3.org/TR/css3-selectors/)相当のセレクターに対応しています。ただし下記の一部セレクターには非対応です。
+Selectors Level 3 ( http://www.w3.org/TR/css3-selectors/ )相当のセレクターに対応しています。ただし下記の一部セレクターには非対応です。
 
+- :not
 - 疑似要素 (::before, ::after, ::first-line, ::first-letter)
 - UI要素の疑似クラス (:enabled, :checked, :indeterminate)
 - :empty 疑似クラス
