@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0045DD60-B7D0-4858-9AFF-8419B766962C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Cartelet</RootNamespace>
+    <AssemblyName>Cartelet</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AttributesDictionary.cs" />
+    <Compile Include="CarteletContext.cs" />
+    <Compile Include="CarteletExtensions.cs" />
+    <Compile Include="ClassList.cs" />
+    <Compile Include="ContextStorage.cs" />
+    <Compile Include="Html\CompiledSelectorHandler.cs" />
+    <Compile Include="Html\HtmlFilter.cs" />
+    <Compile Include="Html\HtmlParser.cs" />
+    <Compile Include="Html\NodeInfo.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Selector\AttributeSelector.cs" />
+    <Compile Include="Selector\ClassSelector.cs" />
+    <Compile Include="Selector\Combinator.cs" />
+    <Compile Include="Selector\CompiledSelector.cs" />
+    <Compile Include="Selector\Expression.cs" />
+    <Compile Include="Selector\FunctionalPseudoSelector.cs" />
+    <Compile Include="Selector\IdSelector.cs" />
+    <Compile Include="Selector\Negation.cs" />
+    <Compile Include="Selector\Production.cs" />
+    <Compile Include="Selector\PseudoSelector.cs" />
+    <Compile Include="Selector\SelectorParser.cs" />
+    <Compile Include="Selector\SelectorParser.Base.cs" />
+    <Compile Include="Selector\SimpleSelectors.cs" />
+    <Compile Include="Selector\Selector.cs" />
+    <Compile Include="Selector\TypeSelector.cs" />
+    <Compile Include="Selector\UniversalSelector.cs" />
+    <Compile Include="StorageSession.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

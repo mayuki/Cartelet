@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cartelet", "Cartelet\Cartelet.csproj", "{0045DD60-B7D0-4858-9AFF-8419B766962C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cartelet.Tests", "Cartelet.Tests\Cartelet.Tests.csproj", "{040DA063-D4B1-4579-8EB3-0534A6C8BF7A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cartelet.Mvc", "Cartelet.Mvc\Cartelet.Mvc.csproj", "{53DC478E-F0BE-48BC-BA61-DB376861E9CC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cartelet.StylesheetExpander", "Cartelet.StylesheetExpander\Cartelet.StylesheetExpander.csproj", "{8A92ADB3-E9CD-4D66-AFBB-3A717D73F1A9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0045DD60-B7D0-4858-9AFF-8419B766962C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0045DD60-B7D0-4858-9AFF-8419B766962C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0045DD60-B7D0-4858-9AFF-8419B766962C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0045DD60-B7D0-4858-9AFF-8419B766962C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{040DA063-D4B1-4579-8EB3-0534A6C8BF7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{040DA063-D4B1-4579-8EB3-0534A6C8BF7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{040DA063-D4B1-4579-8EB3-0534A6C8BF7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{040DA063-D4B1-4579-8EB3-0534A6C8BF7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53DC478E-F0BE-48BC-BA61-DB376861E9CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53DC478E-F0BE-48BC-BA61-DB376861E9CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53DC478E-F0BE-48BC-BA61-DB376861E9CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53DC478E-F0BE-48BC-BA61-DB376861E9CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A92ADB3-E9CD-4D66-AFBB-3A717D73F1A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A92ADB3-E9CD-4D66-AFBB-3A717D73F1A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A92ADB3-E9CD-4D66-AFBB-3A717D73F1A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A92ADB3-E9CD-4D66-AFBB-3A717D73F1A9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
