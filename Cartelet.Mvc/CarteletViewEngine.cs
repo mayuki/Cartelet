@@ -47,7 +47,14 @@ namespace Cartelet.Mvc
 
         public void ReleaseView(ControllerContext controllerContext, IView view)
         {
-            BaseViewEngine.ReleaseView(controllerContext, (view as CarteletView).BaseView);
+            if (view is CarteletView)
+            {
+                BaseViewEngine.ReleaseView(controllerContext, (view as CarteletView).BaseView);
+            }
+            else
+            {
+                BaseViewEngine.ReleaseView(controllerContext, view);
+            }
         }
     }
 }
