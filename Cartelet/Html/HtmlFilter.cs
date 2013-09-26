@@ -97,9 +97,16 @@ namespace Cartelet.Html
                 Matcher = CompiledSelector.Compile(parsed),
                 Selector = parsed,
                 SelectorString = selector,
-                Handler = handler,
                 Type = handlerType,
             };
+            compiled.Handler = (ctx, nodeInfo) =>
+                               {
+                                   var stopwatch = Stopwatch.StartNew();
+                                   var result = handler(ctx, nodeInfo);
+                                   stopwatch.Stop();
+                                   ctx.TraceCountHandlers[compiled].HandlerElapsedTotalTicks += stopwatch.Elapsed.Ticks;
+                                   return result;
+                               };
 
             var lastClassSelector = parsed.Children.Last().Children.OfType<ClassSelector>().FirstOrDefault();
             if (lastClassSelector != null)
@@ -159,7 +166,28 @@ namespace Cartelet.Html
             var start = 0;
             context.ElapsedHandlerTicks = 0;
             context.ElapsedSelectorMatchTicks = 0;
+            context.TraceCountHandlers.Clear();
+
+            foreach (var handler in HandlersByClassName.Values
+                .Concat(HandlersById.Values)
+                .Concat(HandlersByTagName.Values)
+                .SelectMany(x => x)
+                .Concat(Handlers))
+            {
+                context.TraceCountHandlers[handler] = new TraceResult();
+            }
+
             ToHtmlString(context, node, ref start);
+
+#if DEBUG
+            var slow = context.TraceCountHandlers.OrderByDescending(x => x.Value.MatchTotalElapsedTicks).ToList();
+            Debug.WriteLine("-----");
+            foreach (var slowQuery in slow.Take(5))
+            {
+                Debug.WriteLine(slowQuery.Key.SelectorString + ": " + slowQuery.Value.ToString());
+            }
+            Debug.WriteLine("-----");
+#endif
         }
 
         private void ToHtmlString(CarteletContext context, NodeInfo node, ref Int32 start)
@@ -184,8 +212,8 @@ namespace Cartelet.Html
                         {
                             cascadeClassNames.Add(className);
                         }
-                        if (!String.IsNullOrEmpty(node.Id))
-                            cascadeIds.Add(node.Id);
+                        if (!String.IsNullOrEmpty(parent.Id))
+                            cascadeIds.Add(parent.Id);
 
                         parent = parent.Parent;
                     }
@@ -197,8 +225,7 @@ namespace Cartelet.Html
                     {
                         foreach (var handler in HandlersById[node.Id])
                         {
-                            if (handler.Match(context, node, cascadeClassNames, cascadeIds))
-                                matchedHandlers.Add(handler);
+                            ExecuteMatch(context, node, handler, cascadeClassNames, cascadeIds, matchedHandlers);
                         }
                     }
 
@@ -206,8 +233,7 @@ namespace Cartelet.Html
                     {
                         foreach (var handler in HandlersByTagName[node.TagNameUpper])
                         {
-                            if (handler.Match(context, node, cascadeClassNames, cascadeIds))
-                                matchedHandlers.Add(handler);
+                            ExecuteMatch(context, node, handler, cascadeClassNames, cascadeIds, matchedHandlers);
                         }
                     }
 
@@ -217,23 +243,21 @@ namespace Cartelet.Html
                         {
                             foreach (var handler in HandlersByClassName[className])
                             {
-                                if (handler.Match(context, node, cascadeClassNames, cascadeIds))
-                                    matchedHandlers.Add(handler);
+                                ExecuteMatch(context, node, handler, cascadeClassNames, cascadeIds, matchedHandlers);
                             }
                         }
                     }
 
                     foreach (var handler in Handlers)
                     {
-                        if (handler.Match(context, node, cascadeClassNames, cascadeIds))
-                            matchedHandlers.Add(handler);
+                        ExecuteMatch(context, node, handler, cascadeClassNames, cascadeIds, matchedHandlers);
                     }
 
                     stopwatchMatch.Stop();
-                    context.ElapsedSelectorMatchTicks += stopwatchMatch.ElapsedTicks;
+                    context.ElapsedSelectorMatchTicks += stopwatchMatch.Elapsed.Ticks;
 
                     // 最後にマッチしたハンドラを渡してまとめて処理するやつに投げる
-                    var stopwatchHandler = Stopwatch.StartNew();
+                    var stopwatchProcessHandlers = Stopwatch.StartNew();
                     if (matchedHandlers.Count > 0)
                     {
                         foreach (var matchedHandlerGroup in matchedHandlers.GroupBy(x => x.Type))
@@ -251,8 +275,8 @@ namespace Cartelet.Html
                             handler(context, node, matchedHandlerGroup.Select(x => x).ToList());
                         }
                     }
-                    stopwatchHandler.Stop();
-                    context.ElapsedHandlerTicks += stopwatchHandler.ElapsedTicks;
+                    stopwatchProcessHandlers.Stop();
+                    context.ElapsedHandlerTicks += stopwatchProcessHandlers.Elapsed.Ticks;
 
                     // タグ(<hoge>)
                     if (node.IsDirty)
@@ -302,6 +326,21 @@ namespace Cartelet.Html
             if (node.Parent == null)
             {
                 writer.Write(originalContent.Substring(start, originalContent.Length - start));
+            }
+        }
+
+        private void ExecuteMatch(CarteletContext context, NodeInfo node, CompiledSelectorHandler handler,
+            ISet<string> cascadeClassNames, ISet<string> cascadeIds, List<CompiledSelectorHandler> matchedHandlers)
+        {
+            var traceResult = context.TraceCountHandlers[handler];
+            traceResult.MatcherCallCount++;
+            var stopwatch = Stopwatch.StartNew();
+            if (handler.Match(context, node, cascadeClassNames, cascadeIds))
+            {
+                stopwatch.Stop();
+                traceResult.MatchedCount++;
+                traceResult.MatchTotalElapsedTicks += stopwatch.Elapsed.Ticks;
+                matchedHandlers.Add(handler);
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,10 +28,13 @@ namespace Cartelet.Html
         public HashSet<String> RequiredClassNames { get; set; }
         public HashSet<String> RequiredIds { get; set; }
 
-        public Boolean Match(CarteletContext ctx, NodeInfo nodeInfo, HashSet<String> cascadeClassNames, HashSet<String> cascadedIds)
+        public Boolean Match(CarteletContext ctx, NodeInfo nodeInfo, ISet<String> cascadeClassNames, ISet<String> cascadedIds)
         {
+            var stopwatch = Stopwatch.StartNew();
             var isClassNameCascaded = RequiredClassNames.IsSubsetOf(cascadeClassNames);
             var isIdCascaded = RequiredIds.IsSubsetOf(cascadedIds);
+            stopwatch.Stop();
+            ctx.TraceCountHandlers[this].MatchPreMatcherElapsedTicks += stopwatch.ElapsedTicks;
 
             if (isClassNameCascaded && isIdCascaded && Matcher(nodeInfo))
             {
@@ -68,6 +72,11 @@ namespace Cartelet.Html
 
             RequiredIds = ids;
             RequiredClassNames = classNames;
+        }
+
+        public override string ToString()
+        {
+            return "CompiledSelectorHandler: " + SelectorString;
         }
     }
 }

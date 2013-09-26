@@ -77,6 +77,7 @@ namespace Cartelet.Mvc
 
         public void End(CarteletContext ctx, String resultContent)
         {
+            _stopwatch.Stop();
             if (ctx != null)
             {
                 Trace.WriteLine(String.Format(
