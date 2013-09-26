@@ -173,6 +173,22 @@ namespace Cartelet.Html
                     // タグまで
                     writer.Write(originalContent.Substring(start, node.Start - start));
 
+                    // 親から先祖までたどってclassをかき集める
+                    var cascadeClassNames = new HashSet<String>(StringComparer.Ordinal);
+                    var cascadeIds = new HashSet<String>(StringComparer.Ordinal);
+                    var parent = node.Parent;
+                    while (parent != null)
+                    {
+                        foreach (var className in parent.ClassList)
+                        {
+                            cascadeClassNames.Add(className);
+                        }
+                        if (!String.IsNullOrEmpty(node.Id))
+                            cascadeIds.Add(node.Id);
+
+                        parent = parent.Parent;
+                    }
+
                     // フィルタ
                     var stopwatchMatch = Stopwatch.StartNew();
                     var matchedHandlers = new List<CompiledSelectorHandler>();
@@ -180,34 +196,38 @@ namespace Cartelet.Html
                     {
                         foreach (var handler in HandlersById[node.Id])
                         {
-                            if (handler.Match(context, node))
+                            if (handler.Match(context, node, cascadeClassNames, cascadeIds))
                                 matchedHandlers.Add(handler);
                         }
                     }
+
                     if (HandlersByTagName.ContainsKey(node.TagNameUpper))
                     {
                         foreach (var handler in HandlersByTagName[node.TagNameUpper])
                         {
-                            if (handler.Match(context, node))
+                            if (handler.Match(context, node, cascadeClassNames, cascadeIds))
                                 matchedHandlers.Add(handler);
                         }
                     }
+
                     foreach (var className in node.ClassList)
                     {
                         if (HandlersByClassName.ContainsKey(className))
                         {
                             foreach (var handler in HandlersByClassName[className])
                             {
-                                if (handler.Match(context, node))
+                                if (handler.Match(context, node, cascadeClassNames, cascadeIds))
                                     matchedHandlers.Add(handler);
                             }
                         }
                     }
+
                     foreach (var handler in Handlers)
                     {
-                        if (handler.Match(context, node))
+                        if (handler.Match(context, node, cascadeClassNames, cascadeIds))
                             matchedHandlers.Add(handler);
                     }
+
                     stopwatchMatch.Stop();
                     context.ElapsedSelectorMatchTime += stopwatchMatch.ElapsedMilliseconds;
 
