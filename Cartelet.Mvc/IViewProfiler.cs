@@ -79,7 +79,9 @@ namespace Cartelet.Mvc
         {
             if (ctx != null)
             {
-                Trace.WriteLine(String.Format("CarteletView: Render:{0}ms(+0), Parse:{1}ms(+{3}ms), Filter:{2}ms(+{4}ms)/Match:{5}ms, Length:{6}", _renderMs, _parseMs, _filterMs, _parseMs - _renderMs, _filterMs - _parseMs, ctx.ElapsedSelectorMatchTime, resultContent.Length));
+                Trace.WriteLine(String.Format(
+                    "CarteletView: Render:{0}ms(+0), Parse:{1}ms(+{3}ms), Filter:{2}ms(+{4}ms)/Match:{5}ms/Handler:{6}ms, Length:{7}"
+                    , _renderMs, _parseMs, _filterMs, _parseMs - _renderMs, _filterMs - _parseMs, ctx.ElapsedSelectorMatchTicks / 10000.0, ctx.ElapsedHandlerTicks / 10000.0, resultContent.Length));
             }
         }
     }
