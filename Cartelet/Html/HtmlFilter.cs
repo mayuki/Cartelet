@@ -157,8 +157,8 @@ namespace Cartelet.Html
         public void Execute(CarteletContext context, NodeInfo node)
         {
             var start = 0;
-            context.ElapsedHandlerTime = 0;
-            context.ElapsedSelectorMatchTime = 0;
+            context.ElapsedHandlerTicks = 0;
+            context.ElapsedSelectorMatchTicks = 0;
             ToHtmlString(context, node, ref start);
         }
 
@@ -230,7 +230,7 @@ namespace Cartelet.Html
                     }
 
                     stopwatchMatch.Stop();
-                    context.ElapsedSelectorMatchTime += stopwatchMatch.ElapsedMilliseconds;
+                    context.ElapsedSelectorMatchTicks += stopwatchMatch.ElapsedTicks;
 
                     // 最後にマッチしたハンドラを渡してまとめて処理するやつに投げる
                     var stopwatchHandler = Stopwatch.StartNew();
@@ -240,7 +240,8 @@ namespace Cartelet.Html
                         {
                             var handler = (matchedHandlerGroup.Key != null && AggregatedHandlers.ContainsKey(matchedHandlerGroup.Key))
                                             ? AggregatedHandlers[matchedHandlerGroup.Key]
-                                            : (CarteletContext ctx, NodeInfo nodeInfo, IList<CompiledSelectorHandler> handlers) => {
+                                            : (CarteletContext ctx, NodeInfo nodeInfo, IList<CompiledSelectorHandler> handlers) =>
+                                            {
                                                 foreach (var h in handlers)
                                                 {
                                                     h.Handler(ctx, nodeInfo);
@@ -251,7 +252,7 @@ namespace Cartelet.Html
                         }
                     }
                     stopwatchHandler.Stop();
-                    context.ElapsedHandlerTime += stopwatchHandler.ElapsedMilliseconds;
+                    context.ElapsedHandlerTicks += stopwatchHandler.ElapsedTicks;
 
                     // タグ(<hoge>)
                     if (node.IsDirty)
@@ -269,7 +270,7 @@ namespace Cartelet.Html
                         if (node.IsXmlStyleSelfClose)
                         {
                             writer.Write(" />");
-                            
+
                         }
                         else
                         {

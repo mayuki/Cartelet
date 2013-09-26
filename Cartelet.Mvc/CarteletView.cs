@@ -45,7 +45,7 @@ namespace Cartelet.Mvc
                 // Filter/Rewrite HTML
                 _htmlFilter.Execute(ctx, rootNode);
                 var filterMs = stopwatch.ElapsedMilliseconds;
-                Trace.WriteLine(String.Format("CarteletView: Render:{0}ms(+0), Parse:{1}ms(+{4}ms), Filter:{2}ms(+{5}ms)/Match:{6}ms/Handler:{7}ms; Length:{3}", renderMs, parseMs, filterMs, content.Length, parseMs - renderMs, filterMs - parseMs, ctx.ElapsedSelectorMatchTime, ctx.ElapsedHandlerTime));
+                Trace.WriteLine(String.Format("CarteletView: Render:{0}ms(+0), Parse:{1}ms(+{4}ms), Filter:{2}ms(+{5}ms)/Match:{6}ms/Handler:{7}ms; Length:{3}", renderMs, parseMs, filterMs, content.Length, parseMs - renderMs, filterMs - parseMs, ctx.ElapsedSelectorMatchTicks / 10000.0, ctx.ElapsedHandlerTicks / 10000.0));
             }
             else
             {

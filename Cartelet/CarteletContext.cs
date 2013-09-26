@@ -32,12 +32,12 @@ namespace Cartelet
         /// <summary>
         /// セレクターのマッチ処理にかかった時間を取得します。
         /// </summary>
-        public Int64 ElapsedSelectorMatchTime { get; set; }
+        public Int64 ElapsedSelectorMatchTicks { get; set; }
 
         /// <summary>
         /// ハンドラの処理にかかった時間を取得します。
         /// </summary>
-        public Int64 ElapsedHandlerTime { get; set; }
+        public Int64 ElapsedHandlerTicks { get; set; }
 
         public CarteletContext(String content, TextWriter writer)
         {
