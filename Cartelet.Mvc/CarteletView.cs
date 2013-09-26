@@ -18,13 +18,10 @@ namespace Cartelet.Mvc
         private HtmlFilter _htmlFilter;
         private Func<String, TextWriter, CarteletContext> _contextFactory;
 
-        public CarteletView(IView baseView, CarteletViewEngine viewEngine) : this(baseView, viewEngine, null)
-        {
-        }
         public CarteletView(IView baseView, CarteletViewEngine viewEngine, Func<ICarteletViewProfiler> viewProfilerFactory)
         {
             BaseView = baseView;
-            ViewProfilerFactory = viewProfilerFactory ?? (() => new DefaultCarteletViewProfiler());
+            ViewProfilerFactory = viewProfilerFactory;
 
             _htmlFilter = viewEngine.HtmlFilter;
             _contextFactory = viewEngine.CarteletContextFactory;
