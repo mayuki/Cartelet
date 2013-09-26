@@ -157,6 +157,7 @@ namespace Cartelet.Html
         public void Execute(CarteletContext context, NodeInfo node)
         {
             var start = 0;
+            context.ElapsedHandlerTime = 0;
             context.ElapsedSelectorMatchTime = 0;
             ToHtmlString(context, node, ref start);
         }
@@ -232,6 +233,7 @@ namespace Cartelet.Html
                     context.ElapsedSelectorMatchTime += stopwatchMatch.ElapsedMilliseconds;
 
                     // 最後にマッチしたハンドラを渡してまとめて処理するやつに投げる
+                    var stopwatchHandler = Stopwatch.StartNew();
                     if (matchedHandlers.Count > 0)
                     {
                         foreach (var matchedHandlerGroup in matchedHandlers.GroupBy(x => x.Type))
@@ -248,6 +250,8 @@ namespace Cartelet.Html
                             handler(context, node, matchedHandlerGroup.Select(x => x).ToList());
                         }
                     }
+                    stopwatchHandler.Stop();
+                    context.ElapsedHandlerTime += stopwatchHandler.ElapsedMilliseconds;
 
                     // タグ(<hoge>)
                     if (node.IsDirty)

@@ -34,6 +34,11 @@ namespace Cartelet
         /// </summary>
         public Int64 ElapsedSelectorMatchTime { get; set; }
 
+        /// <summary>
+        /// ハンドラの処理にかかった時間を取得します。
+        /// </summary>
+        public Int64 ElapsedHandlerTime { get; set; }
+
         public CarteletContext(String content, TextWriter writer)
         {
             Content = content;
