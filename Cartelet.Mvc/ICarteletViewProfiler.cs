@@ -9,7 +9,7 @@ using System.Web.Mvc;
 
 namespace Cartelet.Mvc
 {
-    public interface IViewProfiler
+    public interface ICarteletViewProfiler
     {
         void Start();
 
@@ -28,7 +28,7 @@ namespace Cartelet.Mvc
         void End(CarteletContext ctx, String resultContent);
     }
 
-    public class DefaultViewProfiler : IViewProfiler
+    public class DefaultCarteletViewProfiler : ICarteletViewProfiler
     {
         private Stopwatch _stopwatch;
         private Int64 _renderMs;

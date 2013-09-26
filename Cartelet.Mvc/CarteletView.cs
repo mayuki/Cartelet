@@ -13,7 +13,7 @@ namespace Cartelet.Mvc
     public class CarteletView : IView
     {
         public IView BaseView { get; private set; }
-        public Func<IViewProfiler> ViewProfilerFactory { get; set; }
+        public Func<ICarteletViewProfiler> ViewProfilerFactory { get; set; }
 
         private HtmlFilter _htmlFilter;
         private Func<String, TextWriter, CarteletContext> _contextFactory;
@@ -21,10 +21,10 @@ namespace Cartelet.Mvc
         public CarteletView(IView baseView, CarteletViewEngine viewEngine) : this(baseView, viewEngine, null)
         {
         }
-        public CarteletView(IView baseView, CarteletViewEngine viewEngine, Func<IViewProfiler> viewProfilerFactory)
+        public CarteletView(IView baseView, CarteletViewEngine viewEngine, Func<ICarteletViewProfiler> viewProfilerFactory)
         {
             BaseView = baseView;
-            ViewProfilerFactory = viewProfilerFactory ?? (() => new DefaultViewProfiler());
+            ViewProfilerFactory = viewProfilerFactory ?? (() => new DefaultCarteletViewProfiler());
 
             _htmlFilter = viewEngine.HtmlFilter;
             _contextFactory = viewEngine.CarteletContextFactory;
