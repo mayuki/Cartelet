@@ -13,13 +13,18 @@ namespace Cartelet.Mvc
     public class CarteletView : IView
     {
         public IView BaseView { get; private set; }
+        public Func<IViewProfiler> ViewProfilerFactory { get; set; }
 
         private HtmlFilter _htmlFilter;
         private Func<String, TextWriter, CarteletContext> _contextFactory;
 
-        public CarteletView(IView baseView, CarteletViewEngine viewEngine)
+        public CarteletView(IView baseView, CarteletViewEngine viewEngine) : this(baseView, viewEngine, null)
+        {
+        }
+        public CarteletView(IView baseView, CarteletViewEngine viewEngine, Func<IViewProfiler> viewProfilerFactory)
         {
             BaseView = baseView;
+            ViewProfilerFactory = viewProfilerFactory ?? (() => new DefaultViewProfiler());
 
             _htmlFilter = viewEngine.HtmlFilter;
             _contextFactory = viewEngine.CarteletContextFactory;
@@ -27,30 +32,37 @@ namespace Cartelet.Mvc
 
         public void Render(ViewContext viewContext, TextWriter writer)
         {
-            var stopwatch = Stopwatch.StartNew();
+            var profiler = ViewProfilerFactory();
+            profiler.Start();
 
             // Render view
+            profiler.OnBeforeRender();
             var writerBuffer = new StringWriter();
             BaseView.Render(viewContext, writerBuffer);
-            var renderMs = stopwatch.ElapsedMilliseconds;
+            profiler.OnAfterRender();
             var content = writerBuffer.ToString();
 
+            profiler.OnBeforeCreateContext();
             var ctx = _contextFactory(content, writer);
+            profiler.OnAfterCreateContext(ctx);
+
             if (ctx != null)
             {
                 // Parse HTML
+                profiler.OnBeforeParse(ctx);
                 var rootNode = HtmlParser.Parse(content);
-                var parseMs = stopwatch.ElapsedMilliseconds;
+                profiler.OnAfterParsed(ctx);
 
                 // Filter/Rewrite HTML
+                profiler.OnBeforeFilter(ctx);
                 _htmlFilter.Execute(ctx, rootNode);
-                var filterMs = stopwatch.ElapsedMilliseconds;
-                Trace.WriteLine(String.Format("CarteletView: Render:{0}ms(+0), Parse:{1}ms(+{4}ms), Filter:{2}ms(+{5}ms)/Match:{6}ms; Length:{3}", renderMs, parseMs, filterMs, content.Length, parseMs - renderMs, filterMs - parseMs, ctx.ElapsedSelectorMatchTime));
+                profiler.OnAfterFilter(ctx);
             }
             else
             {
                 writer.Write(content);
             }
+            profiler.End(ctx, content);
         }
     }
 }

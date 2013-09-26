@@ -38,6 +38,7 @@
     <Compile Include="CarteletView.cs" />
     <Compile Include="CarteletViewEngine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="IViewProfiler.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cartelet\Cartelet.csproj">
