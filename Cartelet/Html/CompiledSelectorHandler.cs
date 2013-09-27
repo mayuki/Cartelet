@@ -33,13 +33,13 @@ namespace Cartelet.Html
 #if DEBUG
             var stopwatch = Stopwatch.StartNew();
 #endif
-            var isClassNameCascaded = (RequiredClassNames.Count == 0) || RequiredClassNames.IsSubsetOf(nodeInfo.CascadeClassNames);
-            var isIdCascaded = (RequiredIds.Count == 0) || RequiredIds.IsSubsetOf(nodeInfo.CascadeIds);
+            var isIdAndClassNameCascaded = ((RequiredClassNames.Count == 0) || RequiredClassNames.IsSubsetOf(nodeInfo.CascadeClassNames)) &&
+                                           ((RequiredIds.Count == 0) || RequiredIds.IsSubsetOf(nodeInfo.CascadeIds));
 #if DEBUG
             stopwatch.Stop();
             ctx.TraceCountHandlers[this].MatchPreMatcherElapsedTicks += stopwatch.ElapsedTicks;
 #endif
-            if (isClassNameCascaded && isIdCascaded && Matcher(nodeInfo))
+            if (isIdAndClassNameCascaded && Matcher(nodeInfo))
             {
                 if (Handler != null)
                 {
