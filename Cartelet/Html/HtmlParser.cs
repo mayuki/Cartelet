@@ -138,13 +138,7 @@ namespace Cartelet.Html
                         {
                             if (curAttrName.Length > 0)
                             {
-                                var curAttrNameStr = curAttrName.ToString();
-                                var curAttrValueStr = HtmlUnescape(curAttrValue.ToString());
-                                attributes[curAttrNameStr] = curAttrValueStr;
-                                if (curAttrNameStr == "id")
-                                    id = curAttrValueStr;
-                                if (curAttrNameStr == "class")
-                                    classNames = curAttrValueStr;
+                                SetAttributeValue(curAttrName, curAttrValue, attributes, ref id, ref classNames);
                             }
                             tagEndPos = attributeScanPos;
                             break;
@@ -206,14 +200,7 @@ namespace Cartelet.Html
                             {
                                 // 次の名前
                                 attrState = AttributeReadState.Name;
-                                var curAttrNameStr = curAttrName.ToString();
-                                var curAttrValueStr = HtmlUnescape(curAttrValue.ToString());
-                                attributes[curAttrNameStr] = curAttrValueStr;
-                                if (curAttrNameStr == "id")
-                                    id = curAttrValueStr;
-                                if (curAttrNameStr == "class")
-                                    classNames = curAttrValueStr;
-                                curAttrName.Clear();
+                                SetAttributeValue(curAttrName, curAttrValue, attributes, ref id, ref classNames);
                                 curAttrName.Append(c);
                             }
                         }
@@ -245,15 +232,7 @@ namespace Cartelet.Html
                             {
                                 // 閉じまたは値の最後
                                 attrState = AttributeReadState.ExpectName; // AttrName
-                                var curAttrNameStr = curAttrName.ToString();
-                                var curAttrValueStr = HtmlUnescape(curAttrValue.ToString());
-                                attributes[curAttrNameStr] = curAttrValueStr;
-                                if (curAttrNameStr == "id")
-                                    id = curAttrValueStr;
-                                if (curAttrNameStr == "class")
-                                    classNames = curAttrValueStr;
-                                curAttrName.Clear();
-                                curAttrValue.Clear();
+                                SetAttributeValue(curAttrName, curAttrValue, attributes, ref id, ref classNames);
                             }
                             else
                             {
@@ -273,15 +252,7 @@ namespace Cartelet.Html
                             {
                                 // 閉じまたは値の最後
                                 attrState = AttributeReadState.ExpectName; // AttrName
-                                var curAttrNameStr = curAttrName.ToString();
-                                var curAttrValueStr = HtmlUnescape(curAttrValue.ToString());
-                                attributes[curAttrNameStr] = curAttrValueStr;
-                                if (curAttrNameStr == "id")
-                                    id = curAttrValueStr;
-                                if (curAttrNameStr == "class")
-                                    classNames = curAttrValueStr;
-                                curAttrName.Clear();
-                                curAttrValue.Clear();
+                                SetAttributeValue(curAttrName, curAttrValue, attributes, ref id, ref classNames);
                             }
                             else
                             {
@@ -329,6 +300,22 @@ namespace Cartelet.Html
                 }
             }
             return rootNode;
+        }
+
+        private static void SetAttributeValue(StringBuilder curAttrName, StringBuilder curAttrValue,
+            AttributesDictionary attributes, ref String id, ref String classNames)
+        {
+            var curAttrNameStr = curAttrName.ToString();
+            var curAttrValueStr = HtmlUnescape(curAttrValue.ToString());
+            attributes[curAttrNameStr] = curAttrValueStr;
+
+            if (curAttrNameStr == "id")
+                id = curAttrValueStr;
+            if (curAttrNameStr == "class")
+                classNames = curAttrValueStr;
+
+            curAttrName.Clear();
+            curAttrValue.Clear();
         }
 
         public static void ToHtmlString(NodeInfo node, String originalContent, StringWriter writer)
