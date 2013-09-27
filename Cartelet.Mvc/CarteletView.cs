@@ -39,10 +39,11 @@ namespace Cartelet.Mvc
             profiler.OnAfterRender();
             var content = writerBuffer.ToString();
 
-            profiler.OnBeforeCreateContext();
-            var ctx = _contextFactory(content, writer);
-            profiler.OnAfterCreateContext(ctx);
+            writerBuffer.GetStringBuilder().Clear();
 
+            profiler.OnBeforeCreateContext();
+            var ctx = _contextFactory(content, writerBuffer);
+            profiler.OnAfterCreateContext(ctx);
             if (ctx != null)
             {
                 // Parse HTML
@@ -54,6 +55,8 @@ namespace Cartelet.Mvc
                 profiler.OnBeforeFilter(ctx);
                 _htmlFilter.Execute(ctx, rootNode);
                 profiler.OnAfterFilter(ctx);
+
+                writer.Write(writerBuffer.ToString());
             }
             else
             {
