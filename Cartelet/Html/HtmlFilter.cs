@@ -101,10 +101,14 @@ namespace Cartelet.Html
             };
             compiled.Handler = (ctx, nodeInfo) =>
                                {
+#if DEBUG
                                    var stopwatch = Stopwatch.StartNew();
+#endif
                                    var result = handler(ctx, nodeInfo);
+#if DEBUG
                                    stopwatch.Stop();
                                    ctx.TraceCountHandlers[compiled].HandlerElapsedTotalTicks += stopwatch.Elapsed.Ticks;
+#endif
                                    return result;
                                };
 
@@ -156,7 +160,7 @@ namespace Cartelet.Html
         }
 
         /// <summary>
-        /// HTMLをフィルターします。スレッドセーフ。
+        /// HTMLをフィルターします。このメソッドはコンテキスト単位でスレッドセーフです。
         /// </summary>
         /// <param name="context"></param>
         /// <param name="node"></param>
@@ -166,8 +170,9 @@ namespace Cartelet.Html
             var start = 0;
             context.ElapsedHandlerTicks = 0;
             context.ElapsedSelectorMatchTicks = 0;
-            context.TraceCountHandlers.Clear();
 
+#if DEBUG
+            context.TraceCountHandlers.Clear();
             foreach (var handler in HandlersByClassName.Values
                 .Concat(HandlersById.Values)
                 .Concat(HandlersByTagName.Values)
@@ -176,11 +181,12 @@ namespace Cartelet.Html
             {
                 context.TraceCountHandlers[handler] = new TraceResult();
             }
+#endif
 
             ToHtmlString(context, node, ref start);
 
 #if DEBUG
-            var slow = context.TraceCountHandlers.OrderByDescending(x => x.Value.MatchTotalElapsedTicks).ToList();
+            var slow = context.TraceCountHandlers.OrderByDescending(x => x.Value.TotalTicks).ToList();
             Debug.WriteLine("-----");
             foreach (var slowQuery in slow.Take(5))
             {
@@ -190,6 +196,12 @@ namespace Cartelet.Html
 #endif
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="node"></param>
+        /// <param name="start"></param>
         private void ToHtmlString(CarteletContext context, NodeInfo node, ref Int32 start)
         {
             var originalContent = context.Content;
@@ -202,81 +214,11 @@ namespace Cartelet.Html
                     // タグまで
                     writer.Write(originalContent.Substring(start, node.Start - start));
 
-                    // 親から先祖までたどってclassをかき集める
-                    var cascadeClassNames = new HashSet<String>(StringComparer.Ordinal);
-                    var cascadeIds = new HashSet<String>(StringComparer.Ordinal);
-                    var parent = node.Parent;
-                    while (parent != null)
-                    {
-                        foreach (var className in parent.ClassList)
-                        {
-                            cascadeClassNames.Add(className);
-                        }
-                        if (!String.IsNullOrEmpty(parent.Id))
-                            cascadeIds.Add(parent.Id);
-
-                        parent = parent.Parent;
-                    }
-
                     // フィルタ
-                    var stopwatchMatch = Stopwatch.StartNew();
-                    var matchedHandlers = new List<CompiledSelectorHandler>();
-                    if (node.Id != null && HandlersById.ContainsKey(node.Id))
-                    {
-                        foreach (var handler in HandlersById[node.Id])
-                        {
-                            ExecuteMatch(context, node, handler, cascadeClassNames, cascadeIds, matchedHandlers);
-                        }
-                    }
-
-                    if (HandlersByTagName.ContainsKey(node.TagNameUpper))
-                    {
-                        foreach (var handler in HandlersByTagName[node.TagNameUpper])
-                        {
-                            ExecuteMatch(context, node, handler, cascadeClassNames, cascadeIds, matchedHandlers);
-                        }
-                    }
-
-                    foreach (var className in node.ClassList)
-                    {
-                        if (HandlersByClassName.ContainsKey(className))
-                        {
-                            foreach (var handler in HandlersByClassName[className])
-                            {
-                                ExecuteMatch(context, node, handler, cascadeClassNames, cascadeIds, matchedHandlers);
-                            }
-                        }
-                    }
-
-                    foreach (var handler in Handlers)
-                    {
-                        ExecuteMatch(context, node, handler, cascadeClassNames, cascadeIds, matchedHandlers);
-                    }
-
-                    stopwatchMatch.Stop();
-                    context.ElapsedSelectorMatchTicks += stopwatchMatch.Elapsed.Ticks;
+                    var matchedHandlers = ExecuteMatches(context, node);
 
                     // 最後にマッチしたハンドラを渡してまとめて処理するやつに投げる
-                    var stopwatchProcessHandlers = Stopwatch.StartNew();
-                    if (matchedHandlers.Count > 0)
-                    {
-                        foreach (var matchedHandlerGroup in matchedHandlers.GroupBy(x => x.Type))
-                        {
-                            var handler = (matchedHandlerGroup.Key != null && AggregatedHandlers.ContainsKey(matchedHandlerGroup.Key))
-                                            ? AggregatedHandlers[matchedHandlerGroup.Key]
-                                            : (CarteletContext ctx, NodeInfo nodeInfo, IList<CompiledSelectorHandler> handlers) =>
-                                            {
-                                                foreach (var h in handlers)
-                                                {
-                                                    h.Handler(ctx, nodeInfo);
-                                                }
-                                                return true;
-                                            };
-                            handler(context, node, matchedHandlerGroup.Select(x => x).ToList());
-                        }
-                    }
-                    stopwatchProcessHandlers.Stop();
-                    context.ElapsedHandlerTicks += stopwatchProcessHandlers.Elapsed.Ticks;
+                    ProcessHandlers(context, node, matchedHandlers);
 
                     // タグ(<hoge>)
                     if (node.IsDirty)
@@ -291,15 +233,7 @@ namespace Cartelet.Html
                             }
                         }
 
-                        if (node.IsXmlStyleSelfClose)
-                        {
-                            writer.Write(" />");
-
-                        }
-                        else
-                        {
-                            writer.Write(">");
-                        }
+                        writer.Write(node.IsXmlStyleSelfClose ? " />" : ">");
                     }
                     else
                     {
@@ -309,9 +243,9 @@ namespace Cartelet.Html
                 start = node.End;
 
                 // 子ノード
-                for (var i = 0; i < node.ChildNodes.Count; i++)
+                foreach (var child in node.ChildNodes)
                 {
-                    ToHtmlString(context, node.ChildNodes[i], ref start);
+                    ToHtmlString(context, child, ref start);
                 }
 
                 // 残りの部分
@@ -329,17 +263,112 @@ namespace Cartelet.Html
             }
         }
 
-        private void ExecuteMatch(CarteletContext context, NodeInfo node, CompiledSelectorHandler handler,
-            ISet<string> cascadeClassNames, ISet<string> cascadeIds, List<CompiledSelectorHandler> matchedHandlers)
+        /// <summary>
+        /// マッチしたハンドラーを実行します。
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="node"></param>
+        /// <param name="matchedHandlers"></param>
+        private void ProcessHandlers(CarteletContext context, NodeInfo node, List<CompiledSelectorHandler> matchedHandlers)
         {
+#if DEBUG
+            var stopwatchProcessHandlers = Stopwatch.StartNew();
+#endif
+            if (matchedHandlers.Count > 0)
+            {
+                foreach (var matchedHandlerGroup in matchedHandlers.GroupBy(x => x.Type))
+                {
+                    var handler = (matchedHandlerGroup.Key != null && AggregatedHandlers.ContainsKey(matchedHandlerGroup.Key))
+                        ? AggregatedHandlers[matchedHandlerGroup.Key]
+                        : (ctx, nodeInfo, handlers) =>
+                          {
+                              foreach (var h in handlers)
+                              {
+                                  h.Handler(ctx, nodeInfo);
+                              }
+                              return true;
+                          };
+                    handler(context, node, matchedHandlerGroup.Select(x => x).ToList());
+                }
+            }
+#if DEBUG
+            stopwatchProcessHandlers.Stop();
+            context.ElapsedHandlerTicks += stopwatchProcessHandlers.Elapsed.Ticks;
+#endif
+        }
+
+        /// <summary>
+        /// 要素がマッチするかどうかテストしてマッチしたハンドラーを収集します。
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        private List<CompiledSelectorHandler> ExecuteMatches(CarteletContext context, NodeInfo node)
+        {
+#if DEBUG
+            var stopwatchMatch = Stopwatch.StartNew();
+#endif
+            var matchedHandlers = new List<CompiledSelectorHandler>();
+            if (node.Id != null && HandlersById.ContainsKey(node.Id))
+            {
+                foreach (var handler in HandlersById[node.Id])
+                {
+                    ExecuteMatch(context, node, handler, matchedHandlers);
+                }
+            }
+
+            if (HandlersByTagName.ContainsKey(node.TagNameUpper))
+            {
+                foreach (var handler in HandlersByTagName[node.TagNameUpper])
+                {
+                    ExecuteMatch(context, node, handler, matchedHandlers);
+                }
+            }
+
+            foreach (var className in node.ClassList)
+            {
+                if (HandlersByClassName.ContainsKey(className))
+                {
+                    foreach (var handler in HandlersByClassName[className])
+                    {
+                        ExecuteMatch(context, node, handler, matchedHandlers);
+                    }
+                }
+            }
+
+            foreach (var handler in Handlers)
+            {
+                ExecuteMatch(context, node, handler, matchedHandlers);
+            }
+
+#if DEBUG
+            stopwatchMatch.Stop();
+            context.ElapsedSelectorMatchTicks += stopwatchMatch.Elapsed.Ticks;
+#endif
+            return matchedHandlers;
+        }
+
+        /// <summary>
+        /// 要素がハンドラーにマッチするかテストします。
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="node"></param>
+        /// <param name="handler"></param>
+        /// <param name="matchedHandlers"></param>
+        private void ExecuteMatch(CarteletContext context, NodeInfo node, CompiledSelectorHandler handler, List<CompiledSelectorHandler> matchedHandlers)
+        {
+#if DEBUG
             var traceResult = context.TraceCountHandlers[handler];
             traceResult.MatcherCallCount++;
             var stopwatch = Stopwatch.StartNew();
-            if (handler.Match(context, node, cascadeClassNames, cascadeIds))
+#endif
+            if (handler.Match(context, node))
             {
+#if DEBUG
                 stopwatch.Stop();
                 traceResult.MatchedCount++;
                 traceResult.MatchTotalElapsedTicks += stopwatch.Elapsed.Ticks;
+#endif
                 matchedHandlers.Add(handler);
             }
         }

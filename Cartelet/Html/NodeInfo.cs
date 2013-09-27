@@ -119,6 +119,24 @@ namespace Cartelet.Html
         /// </summary>
         public Boolean IsXmlStyleSelfClose { get; set; }
 
+        /// <summary>
+        /// 親と祖先が持つクラス名を取得します。
+        /// </summary>
+        public HashSet<String> CascadeClassNames
+        {
+            get { if (_cascadeClassNames == null) { UpdateCascadeValues(); } return _cascadeClassNames; }
+        }
+        private HashSet<String> _cascadeClassNames;
+
+        /// <summary>
+        /// 親と祖先が持つIdを取得します。
+        /// </summary>
+        public HashSet<String> CascadeIds
+        {
+            get { if (_cascadeIds == null) { UpdateCascadeValues(); } return _cascadeIds; }
+        }
+        private HashSet<String> _cascadeIds;
+ 
         public static readonly IList<NodeInfo> ZeroList = new List<NodeInfo>(0).AsReadOnly();
 
         public NodeInfo(String id, ClassList classList, AttributesDictionary attributes)
@@ -143,7 +161,7 @@ namespace Cartelet.Html
                                           Attributes["class"] = String.Join(" ", classList);
                                       }
                                   };
-            attributes.OnChanged = () => IsDirty = true;
+            attributes.OnChanged = () => { IsDirty = true; _cascadeClassNames = _cascadeIds = null; };
 
             Index = new Lazy<Int32>(() => (Parent == null) ? 0 : Parent.ChildNodes.IndexOf(this));
             IndexOfType = new Lazy<Int32>(() => (Parent == null) ? 0 : Parent.ChildNodes.Where(x => x.TagNameUpper == this.TagNameUpper).ToList().IndexOf(this));
@@ -151,6 +169,27 @@ namespace Cartelet.Html
             IsLastChild = new Lazy<Boolean>(() => (Parent == null) ? true : Parent.ChildNodes.LastOrDefault() == this);
             IsFirstOfType = new Lazy<Boolean>(() => (Parent == null) ? true : Parent.ChildNodes.FirstOrDefault(x => x.TagNameUpper == this.TagNameUpper) == this);
             IsLastOfType = new Lazy<Boolean>(() => (Parent == null) ? true : Parent.ChildNodes.LastOrDefault(x => x.TagNameUpper == this.TagNameUpper) == this);
+        }
+
+        private void UpdateCascadeValues()
+        {
+            var cascadeClassNames = new HashSet<String>(StringComparer.Ordinal);
+            var cascadeIds = new HashSet<String>(StringComparer.Ordinal);
+            var parent = this.Parent;
+            while (parent != null)
+            {
+                foreach (var className in parent.ClassList)
+                {
+                    cascadeClassNames.Add(className);
+                }
+                if (!String.IsNullOrEmpty(parent.Id))
+                    cascadeIds.Add(parent.Id);
+
+                parent = parent.Parent;
+            }
+
+            _cascadeClassNames = cascadeClassNames;
+            _cascadeIds = cascadeIds;
         }
 
         public override string ToString()

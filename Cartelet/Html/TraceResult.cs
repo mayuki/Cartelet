@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Cartelet.Html
 {
+#if DEBUG
     public class TraceResult
     {
         /// <summary>
@@ -43,4 +44,5 @@ namespace Cartelet.Html
             );
         }
     }
+#endif
 }

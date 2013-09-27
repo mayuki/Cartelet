@@ -28,14 +28,17 @@ namespace Cartelet.Html
         public HashSet<String> RequiredClassNames { get; set; }
         public HashSet<String> RequiredIds { get; set; }
 
-        public Boolean Match(CarteletContext ctx, NodeInfo nodeInfo, ISet<String> cascadeClassNames, ISet<String> cascadedIds)
+        public Boolean Match(CarteletContext ctx, NodeInfo nodeInfo)
         {
+#if DEBUG
             var stopwatch = Stopwatch.StartNew();
-            var isClassNameCascaded = RequiredClassNames.IsSubsetOf(cascadeClassNames);
-            var isIdCascaded = RequiredIds.IsSubsetOf(cascadedIds);
+#endif
+            var isClassNameCascaded = (RequiredClassNames.Count == 0) || RequiredClassNames.IsSubsetOf(nodeInfo.CascadeClassNames);
+            var isIdCascaded = (RequiredIds.Count == 0) || RequiredIds.IsSubsetOf(nodeInfo.CascadeIds);
+#if DEBUG
             stopwatch.Stop();
             ctx.TraceCountHandlers[this].MatchPreMatcherElapsedTicks += stopwatch.ElapsedTicks;
-
+#endif
             if (isClassNameCascaded && isIdCascaded && Matcher(nodeInfo))
             {
                 if (Handler != null)
