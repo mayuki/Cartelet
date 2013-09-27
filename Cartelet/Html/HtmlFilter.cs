@@ -211,16 +211,16 @@ namespace Cartelet.Html
             {
                 if (node.TagName != null)
                 {
-                    // タグまで
+                    // 要素の開始タグまで
                     writer.Write(originalContent.Substring(start, node.Start - start));
 
-                    // フィルタ
+                    // 要素にフィルターを適用するハンドラを探してくる
                     var matchedHandlers = ExecuteMatches(context, node);
 
-                    // 最後にマッチしたハンドラを渡してまとめて処理するやつに投げる
+                    // 最後にマッチしたハンドラを渡してまとめてフィルター処理する
                     ProcessHandlers(context, node, matchedHandlers);
 
-                    // タグ(<hoge>)
+                    // 開始タグ(<hoge>)
                     if (node.IsDirty)
                     {
                         // 属性が変わってる
@@ -237,6 +237,7 @@ namespace Cartelet.Html
                     }
                     else
                     {
+                        // そのまま出力する
                         writer.Write(originalContent.Substring(node.Start, node.End - node.Start));
                     }
                 }
