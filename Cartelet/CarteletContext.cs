@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Cartelet.Html;
 
 namespace Cartelet
 {
@@ -37,11 +38,15 @@ namespace Cartelet
         /// </summary>
         public Int64 ElapsedHandlerTicks { get; set; }
 
+        public Dictionary<CompiledSelectorHandler, TraceResult> TraceCountHandlers;
+
         public CarteletContext(String content, TextWriter writer)
         {
             Content = content;
             Writer = writer;
             Items = new ContextStorage(null);
+
+            TraceCountHandlers = new Dictionary<CompiledSelectorHandler, TraceResult>();
         }
 
         /// <summary>
