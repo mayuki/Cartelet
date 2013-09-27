@@ -12,8 +12,6 @@ namespace Cartelet
     /// </summary>
     public class CarteletContext
     {
-        private Lazy<Dictionary<String, Object>> _items = new Lazy<Dictionary<string, object>>(() => new Dictionary<string, object>());
-
         /// <summary>
         /// オリジナルの内容を取得します。
         /// </summary>
