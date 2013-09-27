@@ -39,10 +39,8 @@ namespace Cartelet.Mvc
             profiler.OnAfterRender();
             var content = writerBuffer.ToString();
 
-            writerBuffer.GetStringBuilder().Clear();
-
             profiler.OnBeforeCreateContext();
-            var ctx = _contextFactory(content, writerBuffer);
+            var ctx = _contextFactory(content, writer);
             profiler.OnAfterCreateContext(ctx);
             if (ctx != null)
             {
@@ -55,8 +53,6 @@ namespace Cartelet.Mvc
                 profiler.OnBeforeFilter(ctx);
                 _htmlFilter.Execute(ctx, rootNode);
                 profiler.OnAfterFilter(ctx);
-
-                writer.Write(writerBuffer.ToString());
             }
             else
             {
