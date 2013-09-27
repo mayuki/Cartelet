@@ -45,7 +45,6 @@ namespace Cartelet.Selector
         /// <returns></returns>
         public static Func<NodeInfo, Boolean> Compile(Production selector)
         {
-            return (nodeInfo) => false;
             Func<NodeInfo, Boolean> composedMatcher = (nodeInfo) => true;
             var children = new Queue<Production>(selector.Children);
             while (children.Any())
