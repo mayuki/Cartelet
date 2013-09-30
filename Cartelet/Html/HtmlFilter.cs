@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -37,9 +38,14 @@ namespace Cartelet.Html
         /// エラーや問題がある場合に知らせるハンドラのリストです。
         /// </summary>
         public IList<Func<CarteletContext, NodeInfo, Boolean>> TraceHandlers { get; set; }
+        /// <summary>
+        /// セレクターのキャッシュを使うかどうかを取得・設定します。
+        /// </summary>
+        public Boolean UseSelectorCache { get; set; }
 
         public HtmlFilter()
         {
+            UseSelectorCache = true;
             AggregatedHandlers = new Dictionary<String, Func<CarteletContext, NodeInfo, IList<CompiledSelectorHandler>, Boolean>>();
             Handlers = new List<CompiledSelectorHandler>();
             HandlersByClassName = new Dictionary<String, IList<CompiledSelectorHandler>>(StringComparer.Ordinal);
@@ -80,6 +86,9 @@ namespace Cartelet.Html
                     handlers.Remove(handler);
                 }
             }
+            _cacheHandlersByClassName.Clear();
+            _cacheHandlersByTagName.Clear();
+            _cacheHandlers.Clear();
         }
 
         /// <summary>
@@ -147,6 +156,10 @@ namespace Cartelet.Html
             }
 
             Handlers.Add(compiled);
+
+            _cacheHandlersByClassName.Clear();
+            _cacheHandlersByTagName.Clear();
+            _cacheHandlers.Clear();
         }
 
         /// <summary>
@@ -298,6 +311,10 @@ namespace Cartelet.Html
 #endif
         }
 
+        private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlersByClassName = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
+        private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlersByTagName = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
+        private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlers = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
+
         /// <summary>
         /// 要素がマッチするかどうかテストしてマッチしたハンドラーを収集します。
         /// </summary>
@@ -309,6 +326,36 @@ namespace Cartelet.Html
 #if DEBUG
             var stopwatchMatch = Stopwatch.StartNew();
 #endif
+            // マッチテストするハンドラたちを用意する
+            IList<CompiledSelectorHandler> handlers, handlersByClassName, handlersByTagName;
+            if (UseSelectorCache)
+            {
+                var cascadeClassNamesString = String.Join(" ", node.CascadeClassNames);
+                handlersByClassName =
+                    _cacheHandlersByClassName.GetOrAdd(String.Join(" ", node.ClassList) + ":" + cascadeClassNamesString,
+                        (key) =>
+                                node.ClassList.SelectMany(x => HandlersByClassName.ContainsKey(x) ? HandlersByClassName[x] : Enumerable.Empty<CompiledSelectorHandler>()).Where(
+                                    x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames)).ToList()
+                        );
+                handlersByTagName =
+                    _cacheHandlersByTagName.GetOrAdd(node.TagNameUpper + ":" + cascadeClassNamesString,
+                        (key) =>
+                            HandlersByTagName.ContainsKey(node.TagNameUpper)
+                                ? HandlersByTagName[node.TagNameUpper].Where(x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames)).ToList()
+                                : Enumerable.Empty<CompiledSelectorHandler>().ToList()
+                        );
+
+                handlers =
+                    _cacheHandlers.GetOrAdd(node.TagNameUpper + ":" + cascadeClassNamesString,
+                        (key) => Handlers.Where(x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames)).ToList());
+            }
+            else
+            {
+                handlersByTagName = HandlersByTagName.ContainsKey(node.TagNameUpper) ? HandlersByTagName[node.TagNameUpper] : Enumerable.Empty<CompiledSelectorHandler>().ToList();
+                handlersByClassName = node.ClassList.SelectMany(x => HandlersByClassName.ContainsKey(x) ? HandlersByClassName[x] : Enumerable.Empty<CompiledSelectorHandler>()).ToList();
+                handlers = Handlers;
+            }
+
             var matchedHandlers = new List<CompiledSelectorHandler>();
             if (node.Id != null && HandlersById.ContainsKey(node.Id))
             {
@@ -318,26 +365,17 @@ namespace Cartelet.Html
                 }
             }
 
-            if (HandlersByTagName.ContainsKey(node.TagNameUpper))
+            foreach (var handler in handlersByTagName)
             {
-                foreach (var handler in HandlersByTagName[node.TagNameUpper])
-                {
-                    ExecuteMatch(context, node, handler, matchedHandlers);
-                }
+                ExecuteMatch(context, node, handler, matchedHandlers);
             }
 
-            foreach (var className in node.ClassList)
+            foreach (var handler in handlersByClassName)
             {
-                if (HandlersByClassName.ContainsKey(className))
-                {
-                    foreach (var handler in HandlersByClassName[className])
-                    {
-                        ExecuteMatch(context, node, handler, matchedHandlers);
-                    }
-                }
+                ExecuteMatch(context, node, handler, matchedHandlers);
             }
 
-            foreach (var handler in Handlers)
+            foreach (var handler in handlers)
             {
                 ExecuteMatch(context, node, handler, matchedHandlers);
             }
