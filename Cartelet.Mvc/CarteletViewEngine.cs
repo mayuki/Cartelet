@@ -11,25 +11,25 @@ namespace Cartelet.Mvc
     public class CarteletViewEngine : IViewEngine
     {
         public IViewEngine BaseViewEngine { get; private set; }
-        public HtmlFilter HtmlFilter { get; set; }
         public Func<String, TextWriter, CarteletContext> CarteletContextFactory { get; set; }
+        public Func<HtmlFilter> HtmlFilterFactory { get; set; }
         public Func<ICarteletViewProfiler> ViewProfilerFactory { get; set; }
 
         public CarteletViewEngine(IViewEngine baseViewEngine)
-            : this(baseViewEngine, new HtmlFilter(), (content, writer) => new CarteletContext(content, writer), null)
+            : this(baseViewEngine, () => new HtmlFilter(), (content, writer) => new CarteletContext(content, writer), null)
         {
 
         }
-        public CarteletViewEngine(IViewEngine baseViewEngine, HtmlFilter htmlFilter, Func<String, TextWriter, CarteletContext> contextFactory, Func<ICarteletViewProfiler> profilerFactory)
+        public CarteletViewEngine(IViewEngine baseViewEngine, Func<HtmlFilter> htmlFilterFactory, Func<String, TextWriter, CarteletContext> contextFactory, Func<ICarteletViewProfiler> profilerFactory)
         {
             if (baseViewEngine == null)
                 throw new ArgumentNullException("baseViewEngine");
-            if (htmlFilter == null)
-                throw new ArgumentNullException("htmlFilter");
+            if (htmlFilterFactory == null)
+                throw new ArgumentNullException("htmlFilterFactory");
 
             BaseViewEngine = baseViewEngine;
-            HtmlFilter = htmlFilter;
             CarteletContextFactory = contextFactory;
+            HtmlFilterFactory = htmlFilterFactory;
             ViewProfilerFactory = profilerFactory ?? (() => new DefaultCarteletViewProfiler());
         }
 

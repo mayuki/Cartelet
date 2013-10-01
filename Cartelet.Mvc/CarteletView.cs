@@ -15,7 +15,7 @@ namespace Cartelet.Mvc
         public IView BaseView { get; private set; }
         public Func<ICarteletViewProfiler> ViewProfilerFactory { get; set; }
 
-        private HtmlFilter _htmlFilter;
+        private Func<HtmlFilter> _htmlFilterFactory;
         private Func<String, TextWriter, CarteletContext> _contextFactory;
 
         public CarteletView(IView baseView, CarteletViewEngine viewEngine, Func<ICarteletViewProfiler> viewProfilerFactory)
@@ -23,7 +23,7 @@ namespace Cartelet.Mvc
             BaseView = baseView;
             ViewProfilerFactory = viewProfilerFactory;
 
-            _htmlFilter = viewEngine.HtmlFilter;
+            _htmlFilterFactory = viewEngine.HtmlFilterFactory;
             _contextFactory = viewEngine.CarteletContextFactory;
         }
 
@@ -51,7 +51,7 @@ namespace Cartelet.Mvc
 
                 // Filter/Rewrite HTML
                 profiler.OnBeforeFilter(ctx);
-                _htmlFilter.Execute(ctx, rootNode);
+                _htmlFilterFactory().Execute(ctx, rootNode);
                 profiler.OnAfterFilter(ctx);
             }
             else
