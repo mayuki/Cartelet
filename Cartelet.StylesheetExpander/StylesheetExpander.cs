@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using Cartelet.Html;
-using Cartelet.Mvc;
 using ExCSS;
 
 namespace Cartelet.StylesheetExpander
@@ -19,7 +18,7 @@ namespace Cartelet.StylesheetExpander
     {
         private static IDictionary<String, StylesheetExpander> Expanders { get; set; }
 
-        private CarteletViewEngine _carteletViewEngine;
+        private HtmlFilter _htmlFilter;
         private DateTime _cssLastUpdatedAt;
         private String _cssPath;
 
@@ -31,27 +30,27 @@ namespace Cartelet.StylesheetExpander
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="carteletViewEngine"></param>
+        /// <param name="htmlFilter"></param>
         /// <param name="cssPath"></param>
-        public StylesheetExpander(CarteletViewEngine carteletViewEngine, String cssPath)
+        public StylesheetExpander(HtmlFilter htmlFilter, String cssPath)
         {
-            _carteletViewEngine = carteletViewEngine;
+            _htmlFilter = htmlFilter;
             _cssPath = cssPath;
         }
 
         /// <summary>
-        /// CarteletViewEngineにハンドラ等を設定します。
+        /// HtmlFilterにハンドラ等を設定します。
         /// </summary>
-        /// <param name="carteletViewEngine"></param>
+        /// <param name="htmlFilter"></param>
         /// <param name="cssPath"></param>
-        public static void RegisterViewEngine(CarteletViewEngine carteletViewEngine, String cssPath)
+        public static void Register(HtmlFilter htmlFilter, String cssPath)
         {
             if (Expanders.ContainsKey(cssPath))
             {
                 throw new ArgumentException("すでに登録されています。", "cssPath");
             }
 
-            var expander = new StylesheetExpander(carteletViewEngine, cssPath);
+            var expander = new StylesheetExpander(htmlFilter, cssPath);
 
             expander.SetupExpanderForViewEngine();
             expander.UpdateStyleSheet();
@@ -85,7 +84,7 @@ namespace Cartelet.StylesheetExpander
 
         private void RemoveHandler()
         {
-            _carteletViewEngine.HtmlFilter.RemoveHandlers("Cartelet.StylesheetExpander.ExecuteHandlers");
+            _htmlFilter.RemoveHandlers("Cartelet.StylesheetExpander.ExecuteHandlers");
         }
 
         /// <summary>
@@ -93,14 +92,12 @@ namespace Cartelet.StylesheetExpander
         /// </summary>
         private void SetupExpanderForViewEngine()
         {
-            lock (_carteletViewEngine)
+            lock (_htmlFilter)
             {
-                // Setup HTML Filter
-                var htmlFilter = _carteletViewEngine.HtmlFilter;
                 // Register Expander
-                if (!htmlFilter.AggregatedHandlers.ContainsKey("Cartelet.StylesheetExpander.ExecuteHandlers"))
+                if (!_htmlFilter.AggregatedHandlers.ContainsKey("Cartelet.StylesheetExpander.ExecuteHandlers"))
                 {
-                    htmlFilter.AggregatedHandlers.Add("Cartelet.StylesheetExpander.ExecuteHandlers", ExecuteHandlers);
+                    _htmlFilter.AggregatedHandlers.Add("Cartelet.StylesheetExpander.ExecuteHandlers", ExecuteHandlers);
                 }
             }
         }
@@ -174,18 +171,18 @@ namespace Cartelet.StylesheetExpander
         /// </summary>
         private void UpdateStyleSheet()
         {
-            lock (_carteletViewEngine)
+            lock (_htmlFilter)
             {
                 if (!File.Exists(_cssPath))
                     return;
 
-                _cssLastUpdatedAt = File.GetLastWriteTime(_cssPath);
+                var updatedAt = File.GetLastWriteTime(_cssPath);
+
+                if (File.GetLastWriteTime(_cssPath) == _cssLastUpdatedAt)
+                    return;
 
                 // Parse Stylesheet
                 var stylesheet = new StylesheetParser().Parse(File.ReadAllText(_cssPath));
-
-                // Setup HTML Filter
-                var htmlFilter = _carteletViewEngine.HtmlFilter;
 
                 // Register Style/Selectors
                 foreach (var styleRule in stylesheet.RuleSets)
@@ -193,7 +190,7 @@ namespace Cartelet.StylesheetExpander
                     foreach (var selector in styleRule.Selectors)
                     {
                         // マッチした要素に対する処理のハンドラ。
-                        htmlFilter.AddHandler("Cartelet.StylesheetExpander.ExecuteHandlers", selector.ToString(), (ctx, nodeInfo) =>
+                        _htmlFilter.AddHandler("Cartelet.StylesheetExpander.ExecuteHandlers", selector.ToString(), (ctx, nodeInfo) =>
                         {
                             var styleDict = ctx.Items.Get<Dictionary<String, String>>("Cartelet.StylesheetExpander:StyleDictionary");
                             if (styleDict == null)

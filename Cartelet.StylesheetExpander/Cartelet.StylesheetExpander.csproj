@@ -52,10 +52,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cartelet.Mvc\Cartelet.Mvc.csproj">
-      <Project>{53dc478e-f0be-48bc-ba61-db376861e9cc}</Project>
-      <Name>Cartelet.Mvc</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Cartelet\Cartelet.csproj">
       <Project>{0045dd60-b7d0-4858-9aff-8419b766962c}</Project>
       <Name>Cartelet</Name>
