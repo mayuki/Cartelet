@@ -53,6 +53,10 @@ namespace Cartelet.Html
                     pos = tagNameEndPos;
                     continue;
                 }
+                if (content[tagNameEndPos - 1] == '/')
+                {
+                    tagNameEndPos--;
+                }
                 var tagName = content.Substring(pos + 1, tagNameEndPos - pos - 1);
 
                 // コメントは見なかったことにする(スキップする)
@@ -102,6 +106,7 @@ namespace Cartelet.Html
                         case "?XSL-STYLESHEET":
                         case "!DOCTYPE":
                         case "BR":
+                        case "HR":
                         case "IMG":
                         case "META":
                         case "INPUT":
@@ -192,7 +197,9 @@ namespace Cartelet.Html
                             }
                             else if ((c == '>') || (c == '/' && (attributeScanPos <= contentEndPos) && content[attributeScanPos] == '>'))
                             {
+                                // 終わり
                                 attributeScanPos -= (c == '>' ? 1 : 2);
+                                isXmlStyleSelfClose = (c == '/');
                                 isLast = true;
                                 continue;
                             }

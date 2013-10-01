@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Cartelet.Html;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -42,6 +43,13 @@ namespace Cartelet.Tests
 </section>
 ";
             var rootNode = HtmlParser.Parse(content);
+
+            rootNode.ChildNodes[0].TagNameUpper.Is("!DOCTYPE");
+            rootNode.ChildNodes[1].TagNameUpper.Is("META");
+            rootNode.ChildNodes[2].TagNameUpper.Is("TITLE");
+            rootNode.ChildNodes[3].TagNameUpper.Is("SCRIPT");
+            rootNode.ChildNodes[4].TagNameUpper.Is("SECTION");
+
             var sw = new StringWriter();
             HtmlParser.ToHtmlString(rootNode, content, sw);
             sw.ToString().Is(content);
@@ -52,6 +60,13 @@ namespace Cartelet.Tests
         {
             var content = @"<meta charset=UTF-8>";
             var rootNode = HtmlParser.Parse(content);
+
+            var node = rootNode.ChildNodes[0];
+            node.TagNameUpper.Is("META");
+            node.Attributes.Count.IsNot(0);
+            node.Attributes["charset"].Is("UTF-8");
+            node.IsXmlStyleSelfClose.IsFalse();
+
             var sw = new StringWriter();
             HtmlParser.ToHtmlString(rootNode, content, sw);
             sw.ToString().Is(content);
@@ -72,6 +87,14 @@ namespace Cartelet.Tests
         {
             var content = @"<img src=hoge.png alt />";
             var rootNode = HtmlParser.Parse(content);
+
+            var node = rootNode.ChildNodes[0];
+            node.TagNameUpper.Is("IMG");
+            node.Attributes.Count.IsNot(0);
+            node.Attributes["src"].Is("hoge.png");
+            node.Attributes["alt"].Is("");
+            node.IsXmlStyleSelfClose.IsTrue();
+
             var sw = new StringWriter();
             HtmlParser.ToHtmlString(rootNode, content, sw);
             sw.ToString().Is(content);
@@ -123,6 +146,55 @@ namespace Cartelet.Tests
         {
             var content = @"<script>document.write('</scr' + 'pt>');</script>";
             var rootNode = HtmlParser.Parse(content);
+            var sw = new StringWriter();
+            HtmlParser.ToHtmlString(rootNode, content, sw);
+            sw.ToString().Is(content);
+        }
+
+
+        [TestMethod]
+        public void Element_SelfClose_1()
+        {
+            var content = @"<br/><span></span>";
+            var rootNode = HtmlParser.Parse(content);
+
+            var node = rootNode.ChildNodes[0];
+            node.TagNameUpper.Is("BR");
+            node.ChildNodes.Any().IsFalse();
+            node.IsXmlStyleSelfClose.IsTrue();
+
+            var sw = new StringWriter();
+            HtmlParser.ToHtmlString(rootNode, content, sw);
+            sw.ToString().Is(content);
+        }
+
+        [TestMethod]
+        public void Element_SelfClose_2()
+        {
+            var content = @"<br /><span></span>";
+            var rootNode = HtmlParser.Parse(content);
+
+            var node = rootNode.ChildNodes[0];
+            node.TagNameUpper.Is("BR");
+            node.ChildNodes.Any().IsFalse();
+            node.IsXmlStyleSelfClose.IsTrue();
+
+            var sw = new StringWriter();
+            HtmlParser.ToHtmlString(rootNode, content, sw);
+            sw.ToString().Is(content);
+        }
+
+        [TestMethod]
+        public void Element_SelfClose_3()
+        {
+            var content = @"<br><span></span>";
+            var rootNode = HtmlParser.Parse(content);
+
+            var node = rootNode.ChildNodes[0];
+            node.TagNameUpper.Is("BR");
+            node.ChildNodes.Any().IsFalse();
+            node.IsXmlStyleSelfClose.IsFalse();
+
             var sw = new StringWriter();
             HtmlParser.ToHtmlString(rootNode, content, sw);
             sw.ToString().Is(content);
