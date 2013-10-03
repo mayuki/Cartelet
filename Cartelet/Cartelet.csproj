@@ -37,7 +37,6 @@
   <ItemGroup>
     <Compile Include="AttributesDictionary.cs" />
     <Compile Include="CarteletContext.cs" />
-    <Compile Include="CarteletExtensions.cs" />
     <Compile Include="ClassList.cs" />
     <Compile Include="ContextStorage.cs" />
     <Compile Include="Html\CompiledSelectorHandler.cs" />
