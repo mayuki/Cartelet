@@ -121,6 +121,11 @@ namespace Cartelet.Html
                                    return result;
                                };
 
+
+            _cacheHandlersByClassName.Clear();
+            _cacheHandlersByTagName.Clear();
+            _cacheHandlers.Clear();
+
             var lastClassSelector = parsed.Children.Last().Children.OfType<ClassSelector>().FirstOrDefault();
             if (lastClassSelector != null)
             {
@@ -157,9 +162,6 @@ namespace Cartelet.Html
 
             Handlers.Add(compiled);
 
-            _cacheHandlersByClassName.Clear();
-            _cacheHandlersByTagName.Clear();
-            _cacheHandlers.Clear();
         }
 
         /// <summary>
