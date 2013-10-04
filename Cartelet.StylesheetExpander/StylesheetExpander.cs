@@ -98,6 +98,7 @@ namespace Cartelet.StylesheetExpander
                 if (!_htmlFilter.AggregatedHandlers.ContainsKey("Cartelet.StylesheetExpander.ExecuteHandlers"))
                 {
                     _htmlFilter.AggregatedHandlers.Add("Cartelet.StylesheetExpander.ExecuteHandlers", ExecuteHandlers);
+                    _htmlFilter.AttributesFilter.Add((attrName, attrValue) => (attrName == "class") ? null : attrValue);
                 }
             }
         }
@@ -119,8 +120,8 @@ namespace Cartelet.StylesheetExpander
             var styleDict = ctx.Items.Get<Dictionary<String, String>>("Cartelet.StylesheetExpander:StyleDictionary");
             if (styleDict != null)
             {
-
-                nodeInfo.Attributes["style"] = String.Join(";", styleDict.Select(x => x.Key + ":" + x.Value)) + ";" + nodeInfo.Attributes["style"]; // 元のを後ろにつけることでstyle属性直接指定を残す
+                var styleOrig = nodeInfo.Attributes.ContainsKey("style") ? nodeInfo.Attributes["style"] : "";
+                nodeInfo.Attributes["style"] = String.Join(";", styleDict.Select(x => x.Key + ":" + x.Value)) + ";" + styleOrig; // 元のを後ろにつけることでstyle属性直接指定を残す
                 styleDict.Clear();
             }
 
