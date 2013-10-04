@@ -39,6 +39,13 @@ namespace Cartelet.Html
         /// </summary>
         public IList<Func<CarteletContext, NodeInfo, Boolean>> TraceHandlers { get; set; }
         /// <summary>
+        /// 書き換えが発生している要素の属性を出力する際のフィルターのリストです。
+        /// (attrName, attrValue) => attrValue; で null を返すと属性を削除し、String.Emptyを返すと空文字列が出力されます。
+        /// 書き換えが発生しなかった要素には適用されません。
+        /// </summary>
+        public IList<Func<String, String, String>> AttributesFilter { get; set; }
+
+        /// <summary>
         /// セレクターのキャッシュを使うかどうかを取得・設定します。
         /// </summary>
         public Boolean UseSelectorCache { get; set; }
@@ -52,6 +59,7 @@ namespace Cartelet.Html
             HandlersByTagName = new Dictionary<String, IList<CompiledSelectorHandler>>(StringComparer.Ordinal);
             HandlersById = new Dictionary<String, IList<CompiledSelectorHandler>>(StringComparer.Ordinal);
             TraceHandlers = new List<Func<CarteletContext, NodeInfo, Boolean>>();
+            AttributesFilter = new List<Func<String, String, String>>();
         }
 
         /// <summary>
@@ -239,16 +247,34 @@ namespace Cartelet.Html
                     if (node.IsDirty)
                     {
                         // 属性が変わってる
-                        writer.Write("<" + node.TagName);
+                        var sb = new StringBuilder();
+                        sb.Append("<");
+                        sb.Append(node.TagName);
+
                         if (node.Attributes.Count > 0)
                         {
                             foreach (var attr in node.Attributes)
                             {
-                                writer.Write(" " + attr.Key + "=\"" + EscapeHtml(attr.Value) + "\"");
+                                var value = attr.Value;
+                                // 属性値フィルター
+                                foreach (var filter in AttributesFilter)
+                                {
+                                    value = filter(attr.Key, value);
+                                }
+
+                                if (!String.IsNullOrWhiteSpace(value))
+                                {
+                                    sb.Append(" ");
+                                    sb.Append(attr.Key);
+                                    sb.Append("=\"");
+                                    sb.Append(EscapeHtml(value));
+                                    sb.Append("\"");
+                                }
                             }
                         }
 
-                        writer.Write(node.IsXmlStyleSelfClose ? " />" : ">");
+                        sb.Append(node.IsXmlStyleSelfClose ? " />" : ">");
+                        writer.Write(sb.ToString());
                     }
                     else
                     {
