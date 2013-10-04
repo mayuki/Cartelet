@@ -119,7 +119,8 @@ namespace Cartelet.StylesheetExpander
             var styleDict = ctx.Items.Get<Dictionary<String, String>>("Cartelet.StylesheetExpander:StyleDictionary");
             if (styleDict != null)
             {
-                nodeInfo.Attributes["style"] = String.Join(";", styleDict.Select(x => x.Key + ":" + x.Value));
+
+                nodeInfo.Attributes["style"] = String.Join(";", styleDict.Select(x => x.Key + ":" + x.Value)) + ";" + nodeInfo.Attributes["style"]; // 元のを後ろにつけることでstyle属性直接指定を残す
                 styleDict.Clear();
             }
 
