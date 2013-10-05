@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Cartelet.Html
@@ -50,11 +51,21 @@ namespace Cartelet.Html
         /// <summary>
         /// 子供となるノード
         /// </summary>
-        public IList<NodeInfo> ChildNodes { get; set; }
+        public IList<NodeInfo> ChildNodes { get; private set; }
+
         /// <summary>
         /// 親となるノード
         /// </summary>
-        public NodeInfo Parent { get; set; }
+        public NodeInfo Parent
+        {
+            get { return _parent; }
+            private set
+            {
+                _parent = value;
+                Index = _parent.ChildNodes.IndexOf(this);
+            }
+        }
+        private NodeInfo _parent;
 
         /// <summary>
         /// classのリストを返します
@@ -82,7 +93,7 @@ namespace Cartelet.Html
         /// <summary>
         /// 何番目の要素なのかを返します
         /// </summary>
-        public Lazy<Int32> Index { get; private set; }
+        public Int32 Index { get; private set; }
 
         /// <summary>
         /// 種類でフィルターして何番目の要素なのかを返します
@@ -92,7 +103,7 @@ namespace Cartelet.Html
         /// <summary>
         /// 最初の子要素かどうかを表します
         /// </summary>
-        public Lazy<Boolean> IsFirstChild { get; private set; }
+        public Boolean IsFirstChild { get { return Index == 0; } }
 
         /// <summary>
         /// 種類でフィルターした最初の子要素かどうかを表します
@@ -102,7 +113,7 @@ namespace Cartelet.Html
         /// <summary>
         /// 最後の子要素かどうかを表します
         /// </summary>
-        public Lazy<Boolean> IsLastChild { get; private set; }
+        public Boolean IsLastChild { get { return (Parent == null) || Parent.ChildNodes.Count-1 == Index; } }
 
         /// <summary>
         /// 種類でフィルターした最後の子要素かどうかを表します
@@ -163,12 +174,22 @@ namespace Cartelet.Html
                                   };
             attributes.OnChanged = () => { IsDirty = true; _cascadeClassNames = _cascadeIds = null; };
 
-            Index = new Lazy<Int32>(() => (Parent == null) ? 0 : Parent.ChildNodes.IndexOf(this));
-            IndexOfType = new Lazy<Int32>(() => (Parent == null) ? 0 : Parent.ChildNodes.Where(x => x.TagNameUpper == this.TagNameUpper).ToList().IndexOf(this));
-            IsFirstChild = new Lazy<Boolean>(() => (Parent == null) ? true : Parent.ChildNodes.FirstOrDefault() == this);
-            IsLastChild = new Lazy<Boolean>(() => (Parent == null) ? true : Parent.ChildNodes.LastOrDefault() == this);
-            IsFirstOfType = new Lazy<Boolean>(() => (Parent == null) ? true : Parent.ChildNodes.FirstOrDefault(x => x.TagNameUpper == this.TagNameUpper) == this);
-            IsLastOfType = new Lazy<Boolean>(() => (Parent == null) ? true : Parent.ChildNodes.LastOrDefault(x => x.TagNameUpper == this.TagNameUpper) == this);
+            IndexOfType = new Lazy<Int32>(() => (Parent == null) ? 0 : Parent.ChildNodes.Where(x => x.TagNameUpper == this.TagNameUpper).ToList().IndexOf(this), LazyThreadSafetyMode.None);
+            IsFirstOfType = new Lazy<Boolean>(() => (Parent == null) || Parent.ChildNodes.FirstOrDefault(x => x.TagNameUpper == this.TagNameUpper) == this, LazyThreadSafetyMode.None);
+            IsLastOfType = new Lazy<Boolean>(() => (Parent == null) || Parent.ChildNodes.LastOrDefault(x => x.TagNameUpper == this.TagNameUpper) == this, LazyThreadSafetyMode.None);
+        }
+
+        public void AppendChild(NodeInfo node)
+        {
+            if (this.ChildNodes == NodeInfo.ZeroList)
+            {
+                this.ChildNodes = new List<NodeInfo>();
+            }
+
+            this.ChildNodes.Add(node);
+
+            // 親としてセット
+            node.Parent = this;
         }
 
         private void UpdateCascadeValues()

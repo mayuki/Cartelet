@@ -288,18 +288,13 @@ namespace Cartelet.Html
                     TagNameEnd          = tagNameEndPos,
                     AttributeStart      = tagNameEndPos,
                     End                 = tagEndPos+1,
-                    Parent              = node,
                     AttributesRaw       = attributesRaw,
                     IsXmlStyleSelfClose = isXmlStyleSelfClose,
                 };
                 pos = tagNameEndPos;
 
                 // 親要素に子要素として追加
-                if (node.ChildNodes == NodeInfo.ZeroList)
-                {
-                    node.ChildNodes = new List<NodeInfo>();
-                }
-                node.ChildNodes.Add(nodeInfo);
+                node.AppendChild(nodeInfo);
 
                 if (!isEndTagOrSelfClose)
                 {

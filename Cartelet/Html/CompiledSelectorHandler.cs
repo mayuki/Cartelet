@@ -42,21 +42,8 @@ namespace Cartelet.Html
 
         public Boolean Match(CarteletContext ctx, NodeInfo nodeInfo)
         {
-#if DEBUG && MEASURE_TIME
-            var stopwatch = Stopwatch.StartNew();
-#endif
-            var isIdAndClassNameCascaded = ((RequiredClassNames.Count == 0) || RequiredClassNames.IsSubsetOf(nodeInfo.CascadeClassNames)) &&
-                                           ((RequiredIds.Count == 0) || RequiredIds.IsSubsetOf(nodeInfo.CascadeIds));
-#if DEBUG && MEASURE_TIME
-            stopwatch.Stop();
-            ctx.TraceCountHandlers[this].MatchPreMatcherElapsedTicks += stopwatch.ElapsedTicks;
-#endif
-            if (isIdAndClassNameCascaded && Matcher(nodeInfo))
+            if (Matcher(nodeInfo))
             {
-                if (Handler != null)
-                {
-                    Handler(ctx, nodeInfo);
-                }
                 return true;
             }
             return false;

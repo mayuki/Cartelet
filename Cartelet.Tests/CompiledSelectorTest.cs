@@ -26,8 +26,9 @@ namespace Cartelet.Tests
             var matches = Regex.Match(name, "^([^.#]+)(?:\\.([a-zA-Z0-9_-]+))?(?:#([a-zA-Z0-9_-]+))?");
             var elementName = matches.Groups[1].Value;
 
-            var nodeInfo = new NodeInfo(null, new ClassList(), new AttributesDictionary()) { TagName = elementName, TagNameUpper = elementName.ToUpper(), ChildNodes = childNodes.ToList() };
-            foreach (var child in nodeInfo.ChildNodes) child.Parent = nodeInfo;
+            var nodeInfo = new NodeInfo(null, new ClassList(), new AttributesDictionary()) { TagName = elementName, TagNameUpper = elementName.ToUpper() };
+            foreach (var child in childNodes)
+                nodeInfo.AppendChild(child);
 
             if (matches.Groups[3].Success)
             {

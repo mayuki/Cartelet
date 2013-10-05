@@ -181,7 +181,7 @@ namespace Cartelet.Selector
                 switch (funcPseudo.PseudoName)
                 {
                     case "nth-child":
-                        return (nodeInfo) => nth(nodeInfo.Index.Value + 1);
+                        return (nodeInfo) => nth(nodeInfo.Index + 1);
                     case "nth-of-type":
                         return (nodeInfo) => nth(nodeInfo.IndexOfType.Value + 1);
                     // TODO: nth-last-childとか
@@ -192,9 +192,9 @@ namespace Cartelet.Selector
                 switch (pseudo.PseudoName)
                 {
                     case "first-child":
-                        return (nodeInfo) => nodeInfo.IsFirstChild.Value;
+                        return (nodeInfo) => nodeInfo.IsFirstChild;
                     case "last-child":
-                        return (nodeInfo) => nodeInfo.IsLastChild.Value;
+                        return (nodeInfo) => nodeInfo.IsLastChild;
                     case "first-of-type":
                         return (nodeInfo) => nodeInfo.IsFirstOfType.Value;
                     case "last-of-type":
@@ -213,7 +213,6 @@ namespace Cartelet.Selector
         private static Func<NodeInfo, Boolean> AttributeSelectorMatcher(Production production)
         {
             var attrib = (production as AttributeSelector);
-
             if (attrib.IsExactMatch)
             {
                 return (nodeInfo) => nodeInfo.Attributes.ContainsKey(attrib.AttributeName) && nodeInfo.Attributes[attrib.AttributeName] == attrib.Value;
