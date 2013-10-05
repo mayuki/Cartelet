@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Cartelet.Html
 {
-#if DEBUG
+#if DEBUG && MEASURE_TIME
     public class TraceResult
     {
         /// <summary>

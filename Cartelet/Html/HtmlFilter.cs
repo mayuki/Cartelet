@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -22,6 +23,10 @@ namespace Cartelet.Html
         /// 処理のハンドラのリストです。
         /// </summary>
         private IList<CompiledSelectorHandler> Handlers { get; set; }
+        /// <summary>
+        /// 処理のハンドラのリストです。
+        /// </summary>
+        private IList<CompiledSelectorHandler> HandlersForSimply { get; set; }
         /// <summary>
         /// タグ名で絞り込まれた処理のハンドラのリストです。
         /// </summary>
@@ -44,6 +49,12 @@ namespace Cartelet.Html
         /// 書き換えが発生しなかった要素には適用されません。
         /// </summary>
         public IList<Func<String, String, String>> AttributesFilter { get; set; }
+        /// <summary>
+        /// </summary>
+        public IList<Action<CarteletContext, NodeInfo>> PreExecuteHandlers { get; set; }
+        /// <summary>
+        /// </summary>
+        public IList<Action<CarteletContext, NodeInfo>> PostExecuteHandlers { get; set; }
 
         /// <summary>
         /// セレクターのキャッシュを使うかどうかを取得・設定します。
@@ -55,11 +66,14 @@ namespace Cartelet.Html
             UseSelectorCache = true;
             AggregatedHandlers = new Dictionary<String, Func<CarteletContext, NodeInfo, IList<CompiledSelectorHandler>, Boolean>>();
             Handlers = new List<CompiledSelectorHandler>();
+            HandlersForSimply = new List<CompiledSelectorHandler>();
             HandlersByClassName = new Dictionary<String, IList<CompiledSelectorHandler>>(StringComparer.Ordinal);
             HandlersByTagName = new Dictionary<String, IList<CompiledSelectorHandler>>(StringComparer.Ordinal);
             HandlersById = new Dictionary<String, IList<CompiledSelectorHandler>>(StringComparer.Ordinal);
             TraceHandlers = new List<Func<CarteletContext, NodeInfo, Boolean>>();
             AttributesFilter = new List<Func<String, String, String>>();
+            PreExecuteHandlers = new List<Action<CarteletContext, NodeInfo>>();
+            PostExecuteHandlers = new List<Action<CarteletContext, NodeInfo>>();
         }
 
         /// <summary>
@@ -117,22 +131,28 @@ namespace Cartelet.Html
                 Type = handlerType,
             };
             compiled.Handler = (ctx, nodeInfo) =>
-                               {
-#if DEBUG
-                                   var stopwatch = Stopwatch.StartNew();
+            {
+#if DEBUG && MEASURE_TIME
+                var stopwatch = Stopwatch.StartNew();
 #endif
-                                   var result = handler(ctx, nodeInfo);
-#if DEBUG
-                                   stopwatch.Stop();
-                                   ctx.TraceCountHandlers[compiled].HandlerElapsedTotalTicks += stopwatch.Elapsed.Ticks;
+                var result = handler(ctx, nodeInfo);
+#if DEBUG && MEASURE_TIME
+                stopwatch.Stop();
+                ctx.TraceCountHandlers[compiled].HandlerElapsedTotalTicks += stopwatch.Elapsed.Ticks;
 #endif
-                                   return result;
-                               };
+                return result;
+            };
 
 
             _cacheHandlersByClassName.Clear();
             _cacheHandlersByTagName.Clear();
             _cacheHandlers.Clear();
+
+            if (compiled.IsSelectorSimply)
+            {
+                HandlersForSimply.Add(compiled);
+                return;
+            }
 
             var lastClassSelector = parsed.Children.Last().Children.OfType<ClassSelector>().FirstOrDefault();
             if (lastClassSelector != null)
@@ -194,21 +214,36 @@ namespace Cartelet.Html
             context.ElapsedHandlerTicks = 0;
             context.ElapsedSelectorMatchTicks = 0;
 
-#if DEBUG
+#if DEBUG && MEASURE_TIME
             context.TraceCountHandlers.Clear();
             foreach (var handler in HandlersByClassName.Values
                 .Concat(HandlersById.Values)
                 .Concat(HandlersByTagName.Values)
                 .SelectMany(x => x)
-                .Concat(Handlers))
+                .Concat(HandlersForSimply)
+                .Concat(Handlers)
+            )
             {
                 context.TraceCountHandlers[handler] = new TraceResult();
             }
 #endif
 
+            // PreExecute
+            foreach (var handler in PreExecuteHandlers)
+            {
+                handler(context, node);
+            }
+
+            // Execute
             ToHtmlString(context, node, ref start);
 
-#if DEBUG
+            // PostExecute
+            foreach (var handler in PostExecuteHandlers)
+            {
+                handler(context, node);
+            }
+
+#if DEBUG && MEASURE_TIME
             var slow = context.TraceCountHandlers.OrderByDescending(x => x.Value.TotalTicks).ToList();
             Debug.WriteLine("-----");
             foreach (var slowQuery in slow.Take(5))
@@ -313,7 +348,7 @@ namespace Cartelet.Html
         /// <param name="matchedHandlers"></param>
         private void ProcessHandlers(CarteletContext context, NodeInfo node, List<CompiledSelectorHandler> matchedHandlers)
         {
-#if DEBUG
+#if DEBUG && MEASURE_TIME
             var stopwatchProcessHandlers = Stopwatch.StartNew();
 #endif
             if (matchedHandlers.Count > 0)
@@ -333,7 +368,7 @@ namespace Cartelet.Html
                     handler(context, node, matchedHandlerGroup.Select(x => x).ToList());
                 }
             }
-#if DEBUG
+#if DEBUG && MEASURE_TIME
             stopwatchProcessHandlers.Stop();
             context.ElapsedHandlerTicks += stopwatchProcessHandlers.Elapsed.Ticks;
 #endif
@@ -342,6 +377,7 @@ namespace Cartelet.Html
         private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlersByClassName = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
         private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlersByTagName = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
         private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlers = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
+        private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlersForSimply = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
 
         /// <summary>
         /// 要素がマッチするかどうかテストしてマッチしたハンドラーを収集します。
@@ -351,22 +387,50 @@ namespace Cartelet.Html
         /// <returns></returns>
         private List<CompiledSelectorHandler> ExecuteMatches(CarteletContext context, NodeInfo node)
         {
-#if DEBUG
+#if DEBUG && MEASURE_TIME
             var stopwatchMatch = Stopwatch.StartNew();
 #endif
             // マッチテストするハンドラたちを用意する
-            IList<CompiledSelectorHandler> handlers, handlersByClassName, handlersByTagName;
+            IList<CompiledSelectorHandler> handlers, handlersForSimply, handlersByClassName, handlersByTagName;
             if (UseSelectorCache)
             {
-                var cascadeClassNamesString = String.Join(" ", node.CascadeClassNames);
+                var nodePathSb = new StringBuilder();
+                var n = node;
+                while (n != null)
+                {
+                    nodePathSb.Append(n.TagName);
+                    if (!String.IsNullOrWhiteSpace(n.Id))
+                    {
+                        nodePathSb.Append('#');
+                        nodePathSb.Append(n.Id);
+                    }
+                    foreach (var className in n.ClassList)
+                    {
+                        nodePathSb.Append('.');
+                        nodePathSb.Append(className);
+                    }
+                    n = n.Parent;
+
+                    if (n != null)
+                        nodePathSb.Append(' ');
+                }
+                var nodePath = nodePathSb.ToString();
+
+                handlersForSimply = _cacheHandlersForSimply.GetOrAdd(nodePath, (key) => HandlersForSimply.Where(x => x.Match(context, node)).ToList());
+
+                //handlersByTagName = HandlersByTagName.ContainsKey(node.TagNameUpper) ? HandlersByTagName[node.TagNameUpper] : Enumerable.Empty<CompiledSelectorHandler>().ToList();
+                //handlersByClassName = node.ClassList.SelectMany(x => HandlersByClassName.ContainsKey(x) ? HandlersByClassName[x] : Enumerable.Empty<CompiledSelectorHandler>()).ToList();
+                //handlers = Handlers;
+
+                //var cascadeClassNamesString = String.Join(" ", node.CascadeClassNames);
                 handlersByClassName =
-                    _cacheHandlersByClassName.GetOrAdd(String.Join(" ", node.ClassList) + ":" + cascadeClassNamesString,
+                    _cacheHandlersByClassName.GetOrAdd(nodePath,
                         (key) =>
                                 node.ClassList.SelectMany(x => HandlersByClassName.ContainsKey(x) ? HandlersByClassName[x] : Enumerable.Empty<CompiledSelectorHandler>()).Where(
                                     x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames)).ToList()
                         );
                 handlersByTagName =
-                    _cacheHandlersByTagName.GetOrAdd(node.TagNameUpper + ":" + cascadeClassNamesString,
+                    _cacheHandlersByTagName.GetOrAdd(nodePath,
                         (key) =>
                             HandlersByTagName.ContainsKey(node.TagNameUpper)
                                 ? HandlersByTagName[node.TagNameUpper].Where(x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames)).ToList()
@@ -374,11 +438,12 @@ namespace Cartelet.Html
                         );
 
                 handlers =
-                    _cacheHandlers.GetOrAdd(node.TagNameUpper + ":" + cascadeClassNamesString,
+                    _cacheHandlers.GetOrAdd(nodePath,
                         (key) => Handlers.Where(x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames)).ToList());
             }
             else
             {
+                handlersForSimply = HandlersForSimply;
                 handlersByTagName = HandlersByTagName.ContainsKey(node.TagNameUpper) ? HandlersByTagName[node.TagNameUpper] : Enumerable.Empty<CompiledSelectorHandler>().ToList();
                 handlersByClassName = node.ClassList.SelectMany(x => HandlersByClassName.ContainsKey(x) ? HandlersByClassName[x] : Enumerable.Empty<CompiledSelectorHandler>()).ToList();
                 handlers = Handlers;
@@ -393,22 +458,12 @@ namespace Cartelet.Html
                 }
             }
 
-            foreach (var handler in handlersByTagName)
+            foreach (var handler in handlersByTagName.Concat(handlersForSimply).Concat(handlersByClassName).Concat(handlers))
             {
                 ExecuteMatch(context, node, handler, matchedHandlers);
             }
 
-            foreach (var handler in handlersByClassName)
-            {
-                ExecuteMatch(context, node, handler, matchedHandlers);
-            }
-
-            foreach (var handler in handlers)
-            {
-                ExecuteMatch(context, node, handler, matchedHandlers);
-            }
-
-#if DEBUG
+#if DEBUG && MEASURE_TIME
             stopwatchMatch.Stop();
             context.ElapsedSelectorMatchTicks += stopwatchMatch.Elapsed.Ticks;
 #endif
@@ -424,14 +479,14 @@ namespace Cartelet.Html
         /// <param name="matchedHandlers"></param>
         private void ExecuteMatch(CarteletContext context, NodeInfo node, CompiledSelectorHandler handler, List<CompiledSelectorHandler> matchedHandlers)
         {
-#if DEBUG
+#if DEBUG && MEASURE_TIME
             var traceResult = context.TraceCountHandlers[handler];
             traceResult.MatcherCallCount++;
             var stopwatch = Stopwatch.StartNew();
 #endif
             if (handler.Match(context, node))
             {
-#if DEBUG
+#if DEBUG && MEASURE_TIME
                 stopwatch.Stop();
                 traceResult.MatchedCount++;
                 traceResult.MatchTotalElapsedTicks += stopwatch.Elapsed.Ticks;

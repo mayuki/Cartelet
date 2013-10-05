@@ -38,7 +38,7 @@ namespace Cartelet
         /// </summary>
         public Int64 ElapsedHandlerTicks { get; set; }
 
-#if DEBUG
+#if DEBUG && MEASURE_TIME
         public Dictionary<CompiledSelectorHandler, TraceResult> TraceCountHandlers;
 #endif
 
@@ -48,7 +48,7 @@ namespace Cartelet
             Writer = writer;
             Items = new ContextStorage(null);
 
-#if DEBUG
+#if DEBUG && MEASURE_TIME
             TraceCountHandlers = new Dictionary<CompiledSelectorHandler, TraceResult>();
 #endif
         }

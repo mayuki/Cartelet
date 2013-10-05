@@ -28,14 +28,26 @@ namespace Cartelet.Html
         public HashSet<String> RequiredClassNames { get; set; }
         public HashSet<String> RequiredIds { get; set; }
 
+        public Boolean IsSelectorSimply
+        {
+            get
+            {
+                var isSimpleSelectorsOrCombinators = _selector.Children.All(x => x is SimpleSelectors || x is Combinator);
+                var isChildOrDescendantCombinatorsOnly = _selector.Children.OfType<Combinator>().All(x => x.IsChild || x.IsDescendant);
+                var isTypeOrIdOrClassSelectorsOnly = _selector.Children.OfType<SimpleSelectors>().All(x => !x.AttributeSelectors.Any() && !x.PseudoSelectors.Any());
+
+                return isSimpleSelectorsOrCombinators && isChildOrDescendantCombinatorsOnly && isTypeOrIdOrClassSelectorsOnly;
+            }
+        }
+
         public Boolean Match(CarteletContext ctx, NodeInfo nodeInfo)
         {
-#if DEBUG
+#if DEBUG && MEASURE_TIME
             var stopwatch = Stopwatch.StartNew();
 #endif
             var isIdAndClassNameCascaded = ((RequiredClassNames.Count == 0) || RequiredClassNames.IsSubsetOf(nodeInfo.CascadeClassNames)) &&
                                            ((RequiredIds.Count == 0) || RequiredIds.IsSubsetOf(nodeInfo.CascadeIds));
-#if DEBUG
+#if DEBUG && MEASURE_TIME
             stopwatch.Stop();
             ctx.TraceCountHandlers[this].MatchPreMatcherElapsedTicks += stopwatch.ElapsedTicks;
 #endif
