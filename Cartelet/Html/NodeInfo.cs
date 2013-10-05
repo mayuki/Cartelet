@@ -213,6 +213,35 @@ namespace Cartelet.Html
             _cascadeIds = cascadeIds;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        internal String GetPath()
+        {
+            var nodePathSb = new StringBuilder();
+            var n = this;
+            while (n != null)
+            {
+                nodePathSb.Append(n.TagName);
+                if (!String.IsNullOrWhiteSpace(n.Id))
+                {
+                    nodePathSb.Append('#');
+                    nodePathSb.Append(n.Id);
+                }
+                foreach (var className in n.ClassList)
+                {
+                    nodePathSb.Append('.');
+                    nodePathSb.Append(className);
+                }
+                n = n.Parent;
+
+                if (n != null)
+                    nodePathSb.Append(' ');
+            }
+            return nodePathSb.ToString();
+        }
+
         public override string ToString()
         {
             return String.Format("<{0}>", TagName, Attributes);

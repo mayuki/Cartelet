@@ -63,10 +63,7 @@ namespace Cartelet.Html
         /// </summary>
         public Boolean UseSelectorCache { get; set; }
 
-        private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlersByClassName = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
-        private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlersByTagName = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
-        private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlers = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
-        private ConcurrentDictionary<String, List<CompiledSelectorHandler>> _cacheHandlersForSimplifiedSelectors = new ConcurrentDictionary<string, List<CompiledSelectorHandler>>(StringComparer.Ordinal);
+        private ConcurrentDictionary<String, CacheHandlerSet> _cacheHandlerSet = new ConcurrentDictionary<string, CacheHandlerSet>(StringComparer.Ordinal);
 
         public HtmlFilter()
         {
@@ -118,10 +115,7 @@ namespace Cartelet.Html
                     handlers.Remove(handler);
                 }
             }
-            _cacheHandlersByClassName.Clear();
-            _cacheHandlersByTagName.Clear();
-            _cacheHandlers.Clear();
-            _cacheHandlersForSimplifiedSelectors.Clear();
+            _cacheHandlerSet.Clear();
         }
 
         /// <summary>
@@ -155,10 +149,7 @@ namespace Cartelet.Html
             };
 
 
-            _cacheHandlersByClassName.Clear();
-            _cacheHandlersByTagName.Clear();
-            _cacheHandlers.Clear();
-            _cacheHandlersForSimplifiedSelectors.Clear();
+            _cacheHandlerSet.Clear();
 
             if (compiled.IsSelectorSimply)
             {
@@ -397,57 +388,38 @@ namespace Cartelet.Html
 #if DEBUG && MEASURE_TIME
             var stopwatchMatch = Stopwatch.StartNew();
 #endif
-            var nodePathSb = new StringBuilder();
-            var n = node;
-            while (n != null)
-            {
-                nodePathSb.Append(n.TagName);
-                if (!String.IsNullOrWhiteSpace(n.Id))
-                {
-                    nodePathSb.Append('#');
-                    nodePathSb.Append(n.Id);
-                }
-                foreach (var className in n.ClassList)
-                {
-                    nodePathSb.Append('.');
-                    nodePathSb.Append(className);
-                }
-                n = n.Parent;
+            var nodePath = node.GetPath();
 
-                if (n != null)
-                    nodePathSb.Append(' ');
-            }
-            var nodePath = nodePathSb.ToString();
             // マッチテストするハンドラたちを用意する
-            IList<CompiledSelectorHandler> handlers, handlersForSimplifiedSelectors, handlersByClassName, handlersByTagName;
+            CacheHandlerSet handlerSet;
             if (UseSelectorCache)
             {
-                // 簡略化されたセレクター(ID, Type, Class, Combinator(' ' or '>'))で構成されるものはここでマッチ確定できる
-                handlersForSimplifiedSelectors = _cacheHandlersForSimplifiedSelectors.GetOrAdd(nodePath, (key) => HandlersForSimplifiedSelectors.Where(x => x.Match(context, node)).ToList());
-
-                handlersByClassName =
-                    _cacheHandlersByClassName.GetOrAdd(nodePath,
-                        (key) =>
-                                node.ClassList.SelectMany(x => HandlersByClassName.ContainsKey(x) ? HandlersByClassName[x] : Enumerable.Empty<CompiledSelectorHandler>()).Where(
-                                    x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames) && x.RequiredIds.IsSubsetOf(node.CascadeIds)).ToList()
-                        );
-                handlersByTagName =
-                    _cacheHandlersByTagName.GetOrAdd(nodePath,
-                        (key) =>
-                            HandlersByTagName.ContainsKey(node.TagNameUpper)
+                handlerSet = _cacheHandlerSet.GetOrAdd(nodePath,
+                    key =>
+                    {
+                        var cacheHandlerSet = new CacheHandlerSet();
+                        // 簡略化されたセレクター(ID, Type, Class, Combinator(' ' or '>'))で構成されるものはここでマッチ確定できる
+                        cacheHandlerSet.HandlersForSimplifiedSelectors
+                            = HandlersForSimplifiedSelectors.Where(x => x.Match(context, node)).ToList();
+                        cacheHandlerSet.HandlersByClassName
+                            = node.ClassList.SelectMany(x => HandlersByClassName.ContainsKey(x) ? HandlersByClassName[x] : Enumerable.Empty<CompiledSelectorHandler>())
+                                            .Where(x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames) && x.RequiredIds.IsSubsetOf(node.CascadeIds)).ToList();
+                        cacheHandlerSet.HandlersByTagName
+                            = HandlersByTagName.ContainsKey(node.TagNameUpper)
                                 ? HandlersByTagName[node.TagNameUpper].Where(x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames) && x.RequiredIds.IsSubsetOf(node.CascadeIds)).ToList()
-                                : Enumerable.Empty<CompiledSelectorHandler>().ToList()
-                        );
-                handlers =
-                    _cacheHandlers.GetOrAdd(nodePath,
-                        (key) => Handlers.Where(x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames) && x.RequiredIds.IsSubsetOf(node.CascadeIds)).ToList());
+                                : Enumerable.Empty<CompiledSelectorHandler>().ToList();
+                        cacheHandlerSet.Handlers
+                            = Handlers.Where(x => x.RequiredClassNames.IsSubsetOf(node.CascadeClassNames) && x.RequiredIds.IsSubsetOf(node.CascadeIds)).ToList();
+                        return cacheHandlerSet;
+                    });
             }
             else
             {
-                handlersForSimplifiedSelectors = HandlersForSimplifiedSelectors;
-                handlersByTagName = HandlersByTagName.ContainsKey(node.TagNameUpper) ? HandlersByTagName[node.TagNameUpper] : Enumerable.Empty<CompiledSelectorHandler>().ToList();
-                handlersByClassName = node.ClassList.SelectMany(x => HandlersByClassName.ContainsKey(x) ? HandlersByClassName[x] : Enumerable.Empty<CompiledSelectorHandler>()).ToList();
-                handlers = Handlers;
+                handlerSet = new CacheHandlerSet();
+                handlerSet.HandlersForSimplifiedSelectors = HandlersForSimplifiedSelectors;
+                handlerSet.HandlersByTagName = HandlersByTagName.ContainsKey(node.TagNameUpper) ? HandlersByTagName[node.TagNameUpper] : Enumerable.Empty<CompiledSelectorHandler>().ToList();
+                handlerSet.HandlersByClassName = node.ClassList.SelectMany(x => HandlersByClassName.ContainsKey(x) ? HandlersByClassName[x] : Enumerable.Empty<CompiledSelectorHandler>()).ToList();
+                handlerSet.Handlers = Handlers;
             }
 
             var matchedHandlers = new List<CompiledSelectorHandler>();
@@ -459,7 +431,7 @@ namespace Cartelet.Html
                 }
             }
 
-            foreach (var handler in handlersByClassName.Concat(handlersByTagName).Concat(handlers))
+            foreach (var handler in handlerSet.HandlersByClassName.Concat(handlerSet.HandlersByTagName).Concat(handlerSet.Handlers))
             {
                 ExecuteMatch(context, node, handler, matchedHandlers);
             }
@@ -468,7 +440,7 @@ namespace Cartelet.Html
             stopwatchMatch.Stop();
             context.ElapsedSelectorMatchTicks += stopwatchMatch.Elapsed.Ticks;
 #endif
-            return matchedHandlers.Concat(handlersForSimplifiedSelectors).ToList();
+            return matchedHandlers.Concat(handlerSet.HandlersForSimplifiedSelectors).ToList();
         }
 
         /// <summary>

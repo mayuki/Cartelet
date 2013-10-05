@@ -40,6 +40,7 @@
     <Compile Include="ClassList.cs" />
     <Compile Include="ContextStorage.cs" />
     <Compile Include="Html\CompiledSelectorHandler.cs" />
+    <Compile Include="Html\CacheHandlerSet.cs" />
     <Compile Include="Html\HtmlFilter.cs" />
     <Compile Include="Html\HtmlParser.cs" />
     <Compile Include="Html\NodeInfo.cs" />
