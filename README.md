@@ -14,10 +14,12 @@ CSSセレクターにマッチした要素の属性を書き換えたり出力�
 - 出力時にCSSセレクターで要素に対してマッチして属性や出力フィルター処理
 - フィルターしない部分は極力非破壊
 - ASP.NET MVCのViewEngine対応
+- CSSのstyle属性への展開 (Cartelet.StylesheetExpander)
+
 
 できないこと
 --------
-- 高度で厳密なHTMLのパース
+- 高度で厳密なHTMLのパース(閉じタグの省略等)
 - DOMのような操作(要素の追加、移動等)
 - TextWriterを通すような一律変換等を除いた要素の内容書き換え
 
@@ -35,37 +37,39 @@ CSSセレクターにマッチした要素の属性を書き換えたり出力�
 
 サンプルコード
 ---------
-    var content = @"
-    <!DOCTYPE html>
-    <title>hauhau</title>
-    <ul>
-    <li><a href=""#"">1</a></li>
-    <li><a href=""#"">2</a></li>
-    <li><a href=""#"">3</a></li>
-    <li><a href=""#"">4</a></li>
-    </ul>
-    ";
+```cs
+var content = @"
+<!DOCTYPE html>
+<title>hauhau</title>
+<ul>
+<li><a href=""#"">1</a></li>
+<li><a href=""#"">2</a></li>
+<li><a href=""#"">3</a></li>
+<li><a href=""#"">4</a></li>
+</ul>
+";
     
-    var htmlFilter = new HtmlFilter();
-    var node = HtmlParser.Parse(content);
-    var sw = new StringWriter();
-    var context = new CarteletContext(content, sw);
+var htmlFilter = new HtmlFilter();
+var node = HtmlParser.Parse(content);
+var sw = new StringWriter();
+var context = new CarteletContext(content, sw);
     
-    htmlFilter.AddHandler("li:nth-child(2n)", (ctx, nodeInfo) => { nodeInfo.Attributes["style"] = "color:red;"; return true; });
+htmlFilter.AddHandler("li:nth-child(2n)",
+                      (ctx, nodeInfo) => { nodeInfo.Attributes["style"] = "color:red;"; return true; });
     
-    htmlFilter.Execute(context, node);
+htmlFilter.Execute(context, node);
     
-    sw.ToString().Is(@"
-    <!DOCTYPE html>
-    <title>hauhau</title>
-    <ul>
-    <li><a href=""#"">1</a></li>
-    <li style=""color:red;""><a href=""#"">2</a></li>
-    <li><a href=""#"">3</a></li>
-    <li style=""color:red;""><a href=""#"">4</a></li>
-    </ul>
-    ");
-
+sw.ToString().Is(@"
+<!DOCTYPE html>
+<title>hauhau</title>
+<ul>
+<li><a href=""#"">1</a></li>
+<li style=""color:red;""><a href=""#"">2</a></li>
+<li><a href=""#"">3</a></li>
+<li style=""color:red;""><a href=""#"">4</a></li>
+</ul>
+");
+```
 
 CSSセレクターの制限
 ------------------
