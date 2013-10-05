@@ -160,6 +160,7 @@ namespace Cartelet.StylesheetExpander
                 if (updatedAt != _cssLastUpdatedAt)
                 {
                     UpdateStyleSheet();
+                    _cssLastUpdatedAt = updatedAt;
                 }
             }
             else
