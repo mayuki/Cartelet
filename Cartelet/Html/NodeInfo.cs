@@ -126,6 +126,11 @@ namespace Cartelet.Html
         public Boolean IsDirty { get; set; }
 
         /// <summary>
+        /// DOCTYPE宣言など通常の要素ではないものかどうかを取得します。
+        /// </summary>
+        public Boolean IsSpecial { get; set; }
+
+        /// <summary>
         /// XMLタイプの自己終了タグどうかを取得します。
         /// </summary>
         public Boolean IsXmlStyleSelfClose { get; set; }

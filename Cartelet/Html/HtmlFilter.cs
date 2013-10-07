@@ -282,23 +282,19 @@ namespace Cartelet.Html
                     ProcessHandlers(context, node, matchedHandlers);
 
                     // 開始タグ(<hoge>)
-                    if (node.IsDirty)
+                    if (node.IsDirty && !node.IsSpecial)
                     {
                         // 属性が変わってる
                         var sb = new StringBuilder();
                         sb.Append("<");
                         sb.Append(node.TagName);
 
-                        if (node.Attributes.Count > 0)
+                        if (node.Attributes.Any())
                         {
                             foreach (var attr in node.Attributes)
                             {
-                                var value = attr.Value;
                                 // 属性値フィルター
-                                foreach (var filter in AttributesFilter)
-                                {
-                                    value = filter(attr.Key, value);
-                                }
+                                var value = AttributesFilter.Aggregate(attr.Value, (current, filter) => filter(attr.Key, current));
 
                                 if (!String.IsNullOrWhiteSpace(value))
                                 {

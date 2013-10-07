@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -84,10 +85,21 @@ namespace Cartelet.Html
                     {
                         // script要素内は必ずscript要素で終わらないとダメ
                     }
-                    else if (tagNameUpper.Substring(1) == node.Parent.TagNameUpper)
+                    else if (tagNameUpper.Substring(1) != node.TagNameUpper)
                     {
                         // タグ名が違うよ…
                         // Report:Invalid
+#if DEBUG
+                        var lineEndPos = content.IndexOf('\n');
+                        var line = 0;
+                        while (lineEndPos != -1 && lineEndPos < pos)
+                        {
+                            line++;
+                            lineEndPos = content.IndexOf('\n', lineEndPos+1);
+                        }
+
+                        Trace.WriteLine(String.Format("Unmatched Tag: Line: {0}; TagName={1}; EndTagName={2}", line, node.TagNameUpper, tagNameUpper.Substring(1)));
+#endif
                         node.EndOfElement = pos + 1;
                         node = node.Parent;
                     }
@@ -290,6 +302,7 @@ namespace Cartelet.Html
                     End                 = tagEndPos+1,
                     AttributesRaw       = attributesRaw,
                     IsXmlStyleSelfClose = isXmlStyleSelfClose,
+                    IsSpecial           = tagName[0] == '!' || tagName[0] == '?'
                 };
                 pos = tagNameEndPos;
 
