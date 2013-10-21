@@ -44,15 +44,22 @@ namespace Cartelet.Mvc
             profiler.OnAfterCreateContext(ctx);
             if (ctx != null)
             {
-                // Parse HTML
-                profiler.OnBeforeParse(ctx);
-                var rootNode = HtmlParser.Parse(content);
-                profiler.OnAfterParsed(ctx);
+                try
+                {
+                    // Parse HTML
+                    profiler.OnBeforeParse(ctx);
+                    var rootNode = HtmlParser.Parse(content);
+                    profiler.OnAfterParsed(ctx);
 
-                // Filter/Rewrite HTML
-                profiler.OnBeforeFilter(ctx);
-                _htmlFilterFactory().Execute(ctx, rootNode);
-                profiler.OnAfterFilter(ctx);
+                    // Filter/Rewrite HTML
+                    profiler.OnBeforeFilter(ctx);
+                    _htmlFilterFactory().Execute(ctx, rootNode);
+                    profiler.OnAfterFilter(ctx);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("CarteletViewでHTMLをパースまたは変換中にエラーが発生しました。\r\nエラー: " + ex.Message + "\r\n\r\nオリジナルのHTML:\r\n" + content, ex);
+                }
             }
             else
             {
