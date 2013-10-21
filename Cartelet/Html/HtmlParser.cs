@@ -59,6 +59,11 @@ namespace Cartelet.Html
                     tagNameEndPos--;
                 }
                 var tagName = content.Substring(pos + 1, tagNameEndPos - pos - 1);
+                if (String.IsNullOrEmpty(tagName))
+                {
+                    pos = tagNameEndPos;
+                    continue;
+                }
 
                 // コメントは見なかったことにする(スキップする)
                 if (tagName.StartsWith("!--", StringComparison.Ordinal))

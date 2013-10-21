@@ -33,7 +33,76 @@ namespace Cartelet.Tests
             var context = new CarteletContext(content, sw);
             htmlFilter.Execute(context, node);
         }
+        [TestMethod]
+        public void InvalidHtml_1()
+        {
+            var content = @"
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>hauhau</titdy></><br/></br/>
+            ";
 
+            var htmlFilter = new HtmlFilter();
+            var node = HtmlParser.Parse(content);
+            var sw = new StringWriter();
+            var context = new CarteletContext(content, sw);
+            htmlFilter.Execute(context, node);
+        }
+        [TestMethod]
+        public void InvalidHtml_2()
+        {
+            var content = @"
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>hauhau</titdy></><br/><""
+            ";
+
+            var htmlFilter = new HtmlFilter();
+            var node = HtmlParser.Parse(content);
+            var sw = new StringWriter();
+            var context = new CarteletContext(content, sw);
+            htmlFilter.Execute(context, node);
+        }
+
+        [TestMethod]
+        public void InvalidHtml_3()
+        {
+            var content = @"
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>hauhau</ti><""tdy></><br/><""</div></div></div></div>
+            ";
+
+            var htmlFilter = new HtmlFilter();
+            var node = HtmlParser.Parse(content);
+            var sw = new StringWriter();
+            var context = new CarteletContext(content, sw);
+            htmlFilter.Execute(context, node);
+        }
+
+        [TestMethod]
+        public void InvalidHtml_4()
+        {
+            var content = @"
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title>hauhau</ti><></><a></a><><><
+            ";
+
+            var htmlFilter = new HtmlFilter();
+            var node = HtmlParser.Parse(content);
+            var sw = new StringWriter();
+            var context = new CarteletContext(content, sw);
+            htmlFilter.Execute(context, node);
+        }
         [TestMethod]
         public void WithWriter_1()
         {
