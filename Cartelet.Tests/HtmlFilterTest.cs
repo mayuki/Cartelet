@@ -66,6 +66,7 @@ namespace Cartelet.Tests
             var sw = new StringWriter();
             var context = new CarteletContext(content, sw);
             htmlFilter.Execute(context, node);
+            sw.ToString().Is(content);
         }
 
         [TestMethod]
@@ -84,6 +85,7 @@ namespace Cartelet.Tests
             var sw = new StringWriter();
             var context = new CarteletContext(content, sw);
             htmlFilter.Execute(context, node);
+            sw.ToString().Is(content);
         }
 
         [TestMethod]
@@ -102,7 +104,24 @@ namespace Cartelet.Tests
             var sw = new StringWriter();
             var context = new CarteletContext(content, sw);
             htmlFilter.Execute(context, node);
+            sw.ToString().Is(content);
         }
+
+        [TestMethod]
+        public void InvalidHtml_5()
+        {
+            var content = @"
+(><) (<span class=""a"">b</span>
+            ";
+
+            var htmlFilter = new HtmlFilter();
+            var node = HtmlParser.Parse(content);
+            var sw = new StringWriter();
+            var context = new CarteletContext(content, sw);
+            htmlFilter.Execute(context, node);
+            sw.ToString().Is(content);
+        }
+
         [TestMethod]
         public void WithWriter_1()
         {

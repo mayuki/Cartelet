@@ -309,7 +309,7 @@ namespace Cartelet.Html
                     IsXmlStyleSelfClose = isXmlStyleSelfClose,
                     IsSpecial           = tagName[0] == '!' || tagName[0] == '?'
                 };
-                pos = tagNameEndPos;
+                pos = nodeInfo.End;
 
                 // 親要素に子要素として追加
                 node.AppendChild(nodeInfo);
