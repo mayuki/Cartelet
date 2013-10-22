@@ -120,13 +120,21 @@ namespace Cartelet.StylesheetExpander
             var styleDict = ctx.Items.Get<Dictionary<String, String>>("Cartelet.StylesheetExpander:StyleDictionary");
             if (styleDict != null)
             {
-                var styleOrig = nodeInfo.Attributes.ContainsKey("style") ? nodeInfo.Attributes["style"] : "";
-                nodeInfo.Attributes["style"] = String.Join(";", styleDict.Select(x => x.Key + ":" + x.Value)) + ";" + styleOrig; // 元のを後ろにつけることでstyle属性直接指定を残す
+                var newStyle = new StringBuilder();
+                foreach (var style in styleDict)
+                {
+                    newStyle.Append(style.Key);
+                    newStyle.Append(':');
+                    newStyle.Append(style.Value);
+                    newStyle.Append(';');
+                }
+                if (nodeInfo.Attributes.ContainsKey("style"))
+                {
+                    newStyle.Append(nodeInfo.Attributes["style"]); // 元のを後ろにつけることでstyle属性直接指定を残す
+                }
+                nodeInfo.Attributes["style"] = newStyle.ToString();
                 styleDict.Clear();
             }
-
-            // TODO:classは消すところは考えないとマッチするのに影響が出る
-            //nodeInfo.ClassList.Clear();
 
             return true;
         }
@@ -190,6 +198,13 @@ namespace Cartelet.StylesheetExpander
                 // Register Style/Selectors
                 foreach (var styleRule in stylesheet.RuleSets)
                 {
+                    // TODO: !important
+                    var declarations = new Dictionary<String, String>(StringComparer.Ordinal);
+                    foreach (var decl in styleRule.Declarations)
+                    {
+                        declarations[decl.Name] = decl.Expression.ToString();
+                    }
+
                     foreach (var selector in styleRule.Selectors)
                     {
                         // マッチした要素に対する処理のハンドラ。
@@ -201,9 +216,9 @@ namespace Cartelet.StylesheetExpander
                                 styleDict = new Dictionary<String, String>(StringComparer.Ordinal);
                                 ctx.Items.Set("Cartelet.StylesheetExpander:StyleDictionary", styleDict);
                             }
-                            foreach (var declaration in styleRule.Declarations)
+                            foreach (var declaration in declarations)
                             {
-                                styleDict[declaration.Name] = declaration.Expression.ToString();
+                                styleDict[declaration.Key] = declaration.Value;
                             }
                             return true;
                         });

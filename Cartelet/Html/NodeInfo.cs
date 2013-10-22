@@ -177,7 +177,14 @@ namespace Cartelet.Html
                                           Attributes["class"] = String.Join(" ", classList);
                                       }
                                   };
-            attributes.OnChanged = () => { IsDirty = true; _cascadeClassNames = _cascadeIds = null; };
+            attributes.OnChanged = (key) =>
+                                   {
+                                       IsDirty = true;
+                                       if (key == "class" || key == "id")
+                                       {
+                                           _cascadeClassNames = _cascadeIds = null;
+                                       }
+                                   };
 
             IndexOfType = new Lazy<Int32>(() => (Parent == null) ? 0 : Parent.ChildNodes.Where(x => x.TagNameUpper == this.TagNameUpper).ToList().IndexOf(this), LazyThreadSafetyMode.None);
             IsFirstOfType = new Lazy<Boolean>(() => (Parent == null) || Parent.ChildNodes.FirstOrDefault(x => x.TagNameUpper == this.TagNameUpper) == this, LazyThreadSafetyMode.None);
@@ -218,34 +225,37 @@ namespace Cartelet.Html
             _cascadeIds = cascadeIds;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        internal String GetPath()
+        private String _path;
+        internal String Path
         {
-            var nodePathSb = new StringBuilder();
-            var n = this;
-            while (n != null)
+            get
             {
-                nodePathSb.Append(n.TagName);
-                if (!String.IsNullOrWhiteSpace(n.Id))
+                if (_path != null)
+                    return _path;
+
+                var nodePathSb = new StringBuilder();
+
+                nodePathSb.Append(this.TagName);
+                if (!String.IsNullOrWhiteSpace(this.Id))
                 {
                     nodePathSb.Append('#');
-                    nodePathSb.Append(n.Id);
+                    nodePathSb.Append(this.Id);
                 }
-                foreach (var className in n.ClassList)
+                foreach (var className in this.ClassList)
                 {
                     nodePathSb.Append('.');
                     nodePathSb.Append(className);
                 }
-                n = n.Parent;
 
-                if (n != null)
+                if (this.Parent != null)
+                {
                     nodePathSb.Append(' ');
+                    nodePathSb.Append(this.Parent.Path);
+                }
+
+                return _path = nodePathSb.ToString();               
             }
-            return nodePathSb.ToString();
-        }
+        } 
 
         public override string ToString()
         {

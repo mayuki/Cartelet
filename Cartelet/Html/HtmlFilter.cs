@@ -223,7 +223,7 @@ namespace Cartelet.Html
                 .Concat(HandlersById.Values)
                 .Concat(HandlersByTagName.Values)
                 .SelectMany(x => x)
-                .Concat(HandlersForSimply)
+                .Concat(HandlersForSimplifiedSelectors)
                 .Concat(Handlers)
             )
             {
@@ -286,7 +286,7 @@ namespace Cartelet.Html
                     {
                         // 属性が変わってる
                         var sb = new StringBuilder();
-                        sb.Append("<");
+                        sb.Append('<');
                         sb.Append(node.TagName);
 
                         if (node.Attributes.Any())
@@ -298,11 +298,11 @@ namespace Cartelet.Html
 
                                 if (!String.IsNullOrWhiteSpace(value))
                                 {
-                                    sb.Append(" ");
+                                    sb.Append(' ');
                                     sb.Append(attr.Key);
                                     sb.Append("=\"");
                                     sb.Append(EscapeHtml(value));
-                                    sb.Append("\"");
+                                    sb.Append('"');
                                 }
                             }
                         }
@@ -364,7 +364,7 @@ namespace Cartelet.Html
                               }
                               return true;
                           };
-                    handler(context, node, matchedHandlerGroup.Select(x => x).ToList());
+                    handler(context, node, matchedHandlerGroup.ToList());
                 }
             }
 #if DEBUG && MEASURE_TIME
@@ -384,7 +384,7 @@ namespace Cartelet.Html
 #if DEBUG && MEASURE_TIME
             var stopwatchMatch = Stopwatch.StartNew();
 #endif
-            var nodePath = node.GetPath();
+            var nodePath = node.Path;
 
             // マッチテストするハンドラたちを用意する
             CacheHandlerSet handlerSet;
