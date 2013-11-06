@@ -58,7 +58,7 @@ namespace Cartelet.Mvc
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception("CarteletViewでHTMLをパースまたは変換中にエラーが発生しました。\r\nエラー: " + ex.Message + "\r\n\r\nオリジナルのHTML:\r\n" + content, ex);
+                    throw new CarteletViewException("CarteletViewでHTMLをパースまたは変換中にエラーが発生しました。\r\nエラー: " + ex.Message + "\r\n\r\nオリジナルのHTML:\r\n" + content, ex);
                 }
             }
             else
