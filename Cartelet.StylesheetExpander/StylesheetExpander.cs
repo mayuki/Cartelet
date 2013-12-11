@@ -123,10 +123,18 @@ namespace Cartelet.StylesheetExpander
                 var newStyle = new StringBuilder();
                 foreach (var style in styleDict)
                 {
-                    newStyle.Append(style.Key);
-                    newStyle.Append(':');
-                    newStyle.Append(style.Value);
-                    newStyle.Append(';');
+                    // -cartelet-attribute-attrname: hoge; => attrname="hoge"
+                    if (style.Key.StartsWith("-cartelet-attribute-"))
+                    {
+                        nodeInfo.Attributes[style.Key.Substring(20)] = style.Value;
+                    }
+                    else
+                    {
+                        newStyle.Append(style.Key);
+                        newStyle.Append(':');
+                        newStyle.Append(style.Value);
+                        newStyle.Append(';');
+                    }
                 }
                 if (nodeInfo.Attributes.ContainsKey("style"))
                 {
