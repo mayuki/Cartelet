@@ -77,7 +77,7 @@ namespace Cartelet.StylesheetExpander
                 // それから登録しなおす
                 foreach (var expander in Expanders.Values)
                 {
-                    expander.UpdateStyleSheetIfChangedInternal();
+                    expander.UpdateStyleSheet();
                 }
             }
         }
@@ -168,38 +168,34 @@ namespace Cartelet.StylesheetExpander
         /// <summary>
         /// スタイルシートが変更されていたら更新します。
         /// </summary>
-        private void UpdateStyleSheetIfChangedInternal()
+        private void UpdateStyleSheet()
         {
-            if (File.Exists(_cssPath))
+            try
             {
-                var updatedAt = File.GetLastWriteTime(_cssPath);
-                if (updatedAt != _cssLastUpdatedAt)
+                if (File.Exists(_cssPath))
                 {
-                    UpdateStyleSheet();
-                    _cssLastUpdatedAt = updatedAt;
+                    UpdateStyleSheetInternal();
+                    _cssLastUpdatedAt = File.GetLastWriteTime(_cssPath);
+                }
+                else
+                {
+                    _cssLastUpdatedAt = new DateTime();
                 }
             }
-            else
+            catch
             {
                 _cssLastUpdatedAt = new DateTime();
             }
+
         }
 
         /// <summary>
         /// スタイルシートを読み込みます。
         /// </summary>
-        private void UpdateStyleSheet()
+        private void UpdateStyleSheetInternal()
         {
             lock (_htmlFilter)
             {
-                if (!File.Exists(_cssPath))
-                    return;
-
-                var updatedAt = File.GetLastWriteTime(_cssPath);
-
-                if (File.GetLastWriteTime(_cssPath) == _cssLastUpdatedAt)
-                    return;
-
                 // Parse Stylesheet
                 var stylesheet = new StylesheetParser().Parse(File.ReadAllText(_cssPath));
 
