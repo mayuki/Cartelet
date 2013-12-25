@@ -28,11 +28,6 @@ namespace Cartelet.Mvc
         }
 
         [DebuggerHidden]
-        private void RenderCore(ViewContext viewContext, TextWriter writer)
-        {
-            BaseView.Render(viewContext, writer);
-        }
-
         public void Render(ViewContext viewContext, TextWriter writer)
         {
             var profiler = ViewProfilerFactory();
@@ -41,7 +36,7 @@ namespace Cartelet.Mvc
             // Render view
             profiler.OnBeforeRender();
             var writerBuffer = new StringWriter();
-            RenderCore(viewContext, writerBuffer);
+            BaseView.Render(viewContext, writerBuffer);
             profiler.OnAfterRender();
             var content = writerBuffer.ToString();
 
