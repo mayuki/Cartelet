@@ -36,6 +36,19 @@ CSSセレクターにマッチした要素の属性を書き換えたり出力�
 - HTMLを読み込んで特定の属性が指定されている要素の属性を書き換える
 - などなど
 
+
+インストール
+--------
+NuGetで「Cartelet」を検索してインストール、または以下のコマンドをパッケージマネージャーコンソールで実行してください。
+
+```
+Install-Package Cartelet
+```
+
+- https://www.nuget.org/packages/Cartelet/
+- https://www.nuget.org/packages/Cartelet.Mvc/
+- https://www.nuget.org/packages/Cartelet.StylesheetExpander/
+
 サンプルコード
 ---------
 ```cs
