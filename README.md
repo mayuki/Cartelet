@@ -1,5 +1,6 @@
-﻿Cartelet
+Cartelet
 ========
+[![Build status](https://ci.appveyor.com/api/projects/status?id=ngcm4pv7wxhors7l)](https://ci.appveyor.com/project/cartelet)
 
 Cartelet(カータレット)はHTMLをパースしてフィルターするためのライブラリです。
 
