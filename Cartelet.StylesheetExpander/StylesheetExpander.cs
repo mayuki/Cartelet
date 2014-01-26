@@ -197,19 +197,19 @@ namespace Cartelet.StylesheetExpander
             lock (_htmlFilter)
             {
                 // Parse Stylesheet
-                var stylesheet = new StylesheetParser().Parse(File.ReadAllText(_cssPath));
+                var stylesheet = new Parser().Parse(File.ReadAllText(_cssPath));
 
                 // Register Style/Selectors
-                foreach (var styleRule in stylesheet.RuleSets)
+                foreach (var styleRule in stylesheet.Rulesets)
                 {
                     // TODO: !important
                     var declarations = new Dictionary<String, String>(StringComparer.Ordinal);
                     foreach (var decl in styleRule.Declarations)
                     {
-                        declarations[decl.Name] = decl.Expression.ToString();
+                        declarations[decl.Name] = decl.Term.ToString();
                     }
 
-                    foreach (var selector in styleRule.Selectors)
+                    foreach (var selector in (styleRule.Selector is MultipleSelectorList ? styleRule.Selector as IEnumerable<SimpleSelector> : new [] { styleRule.Selector }))
                     {
                         // マッチした要素に対する処理のハンドラ。
                         _htmlFilter.AddHandler("Cartelet.StylesheetExpander.ExecuteHandlers", selector.ToString(), (ctx, nodeInfo) =>

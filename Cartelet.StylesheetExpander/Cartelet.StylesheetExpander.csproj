@@ -32,8 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ExCSS">
-      <HintPath>..\..\packages\ExCSS.1.1.0\lib\net40\ExCSS.dll</HintPath>
+    <Reference Include="ExCSS, Version=2.0.2.0, Culture=neutral, PublicKeyToken=083c9b8a05122ede, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\ExCSS.2.0.2\lib\net45\ExCSS.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
