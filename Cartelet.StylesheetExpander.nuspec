@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Cartelet.StylesheetExpander</id>
+        <version>1.0.0</version>
+        <authors>Mayuki Sawatari</authors>
+        <owners>Mayuki Sawatari</owners>
+        <licenseUrl>https://github.com/mayuki/Cartelet/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/mayuki/Cartelet</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Cartelet(カータレット)を利用して、CSSをstyle属性に展開する機能を提供します。</description>
+        <language>ja-JP</language>
+        <dependencies>
+            <dependency id="Cartelet" version="1.0.0" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="Cartelet.StylesheetExpander\bin\Release\Cartelet.StylesheetExpander.dll" target="lib\net45\Cartelet.StylesheetExpander.dll" />
+    </files>
+</package>
