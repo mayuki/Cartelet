@@ -126,7 +126,13 @@ namespace Cartelet.StylesheetExpander
                     // -cartelet-attribute-attrname: hoge; => attrname="hoge"
                     if (style.Key.StartsWith("-cartelet-attribute-"))
                     {
-                        nodeInfo.Attributes[style.Key.Substring(20)] = style.Value;
+                        // とりあえず先頭がクォートだったら前後のは外す
+                        nodeInfo.Attributes[style.Key.Substring(20)] =
+                            style.Value.StartsWith("'")
+                                ? style.Value.Trim('\'')
+                                : style.Value.StartsWith("\"")
+                                    ? style.Value.Trim('"')
+                                    : style.Value;
                     }
                     else
                     {
