@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Cartelet.StylesheetExpander</id>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
         <authors>Mayuki Sawatari</authors>
         <owners>Mayuki Sawatari</owners>
         <licenseUrl>https://github.com/mayuki/Cartelet/blob/master/LICENSE</licenseUrl>
@@ -12,6 +12,7 @@
         <language>ja-JP</language>
         <dependencies>
             <dependency id="Cartelet" version="1.0.0" />
+            <dependency id="ExCSS" version="2.0.2" />
         </dependencies>
     </metadata>
     <files>

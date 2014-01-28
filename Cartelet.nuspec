@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Cartelet</id>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
         <authors>Mayuki Sawatari</authors>
         <owners>Mayuki Sawatari</owners>
         <licenseUrl>https://github.com/mayuki/Cartelet/blob/master/LICENSE</licenseUrl>
@@ -10,9 +10,6 @@
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Cartelet(カータレット)はHTMLをパースしてフィルターするためのライブラリです。
 CSSセレクターにマッチした要素の属性を書き換えたり出力にフィルターを施すことができます。</description>
-        <dependencies>
-            <dependency id="ExCSS" version="2.0.2" />
-        </dependencies>
     </metadata>
     <files>
         <file src="Cartelet\bin\Release\Cartelet.dll" target="lib\net45\Cartelet.dll" />
