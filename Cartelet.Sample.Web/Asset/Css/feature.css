@@ -1,0 +1,18 @@
+﻿body {
+}
+
+h1 { border: 1px solid red; }
+
+h2 { border: 1px solid blue; }
+
+ul.shimashima > li:nth-child(2n) { background-color: #f0f0f0; }
+
+img {
+    /*
+     * -cartelet-attribte-[属性名]: value; とするとHTMLの要素の属性としてセットされます
+     * 下記の例は height 属性に 100 という値をセットします
+     */
+    -cartelet-attribute-height: 100;
+
+    vertical-align: middle;
+}
