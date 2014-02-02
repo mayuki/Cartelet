@@ -77,7 +77,7 @@ namespace Cartelet.StylesheetExpander
                 // それから登録しなおす
                 foreach (var expander in Expanders.Values)
                 {
-                    expander.UpdateStyleSheetIfChangedInternal();
+                    expander.UpdateStyleSheet();
                 }
             }
         }
@@ -126,7 +126,13 @@ namespace Cartelet.StylesheetExpander
                     // -cartelet-attribute-attrname: hoge; => attrname="hoge"
                     if (style.Key.StartsWith("-cartelet-attribute-"))
                     {
-                        nodeInfo.Attributes[style.Key.Substring(20)] = style.Value;
+                        // とりあえず先頭がクォートだったら前後のは外す
+                        nodeInfo.Attributes[style.Key.Substring(20)] =
+                            style.Value.StartsWith("'")
+                                ? style.Value.Trim('\'')
+                                : style.Value.StartsWith("\"")
+                                    ? style.Value.Trim('"')
+                                    : style.Value;
                     }
                     else
                     {
@@ -168,52 +174,48 @@ namespace Cartelet.StylesheetExpander
         /// <summary>
         /// スタイルシートが変更されていたら更新します。
         /// </summary>
-        private void UpdateStyleSheetIfChangedInternal()
+        private void UpdateStyleSheet()
         {
-            if (File.Exists(_cssPath))
+            try
             {
-                var updatedAt = File.GetLastWriteTime(_cssPath);
-                if (updatedAt != _cssLastUpdatedAt)
+                if (File.Exists(_cssPath))
                 {
-                    UpdateStyleSheet();
-                    _cssLastUpdatedAt = updatedAt;
+                    UpdateStyleSheetInternal();
+                    _cssLastUpdatedAt = File.GetLastWriteTime(_cssPath);
+                }
+                else
+                {
+                    _cssLastUpdatedAt = new DateTime();
                 }
             }
-            else
+            catch
             {
                 _cssLastUpdatedAt = new DateTime();
             }
+
         }
 
         /// <summary>
         /// スタイルシートを読み込みます。
         /// </summary>
-        private void UpdateStyleSheet()
+        private void UpdateStyleSheetInternal()
         {
             lock (_htmlFilter)
             {
-                if (!File.Exists(_cssPath))
-                    return;
-
-                var updatedAt = File.GetLastWriteTime(_cssPath);
-
-                if (File.GetLastWriteTime(_cssPath) == _cssLastUpdatedAt)
-                    return;
-
                 // Parse Stylesheet
-                var stylesheet = new StylesheetParser().Parse(File.ReadAllText(_cssPath));
+                var stylesheet = new Parser().Parse(File.ReadAllText(_cssPath));
 
                 // Register Style/Selectors
-                foreach (var styleRule in stylesheet.RuleSets)
+                foreach (var styleRule in stylesheet.Rulesets)
                 {
                     // TODO: !important
                     var declarations = new Dictionary<String, String>(StringComparer.Ordinal);
                     foreach (var decl in styleRule.Declarations)
                     {
-                        declarations[decl.Name] = decl.Expression.ToString();
+                        declarations[decl.Name] = decl.Term.ToString();
                     }
 
-                    foreach (var selector in styleRule.Selectors)
+                    foreach (var selector in (styleRule.Selector is MultipleSelectorList ? styleRule.Selector as IEnumerable<SimpleSelector> : new [] { styleRule.Selector }))
                     {
                         // マッチした要素に対する処理のハンドラ。
                         _htmlFilter.AddHandler("Cartelet.StylesheetExpander.ExecuteHandlers", selector.ToString(), (ctx, nodeInfo) =>

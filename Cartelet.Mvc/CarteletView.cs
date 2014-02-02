@@ -27,6 +27,7 @@ namespace Cartelet.Mvc
             _contextFactory = viewEngine.CarteletContextFactory;
         }
 
+        [DebuggerHidden]
         public void Render(ViewContext viewContext, TextWriter writer)
         {
             var profiler = ViewProfilerFactory();

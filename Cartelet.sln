@@ -10,6 +10,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cartelet.StylesheetExpander", "Cartelet.StylesheetExpander\Cartelet.StylesheetExpander.csproj", "{8A92ADB3-E9CD-4D66-AFBB-3A717D73F1A9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cartelet.Sample.Web", "Cartelet.Sample.Web\Cartelet.Sample.Web.csproj", "{BDF75710-071C-452B-A4B9-95043B32B192}"
+EndProjectProject("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{F1CBCE95-78D6-4241-9C72-D4AC68BDCAF2}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

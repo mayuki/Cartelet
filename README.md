@@ -1,5 +1,6 @@
-﻿Cartelet
+Cartelet
 ========
+[![Build status](https://ci.appveyor.com/api/projects/status?id=ngcm4pv7wxhors7l)](https://ci.appveyor.com/project/cartelet)
 
 Cartelet(カータレット)はHTMLをパースしてフィルターするためのライブラリです。
 
@@ -34,6 +35,19 @@ CSSセレクターにマッチした要素の属性を書き換えたり出力�
 - HTMLを読み込んで特定のclassが指定されている部分のみ、大文字英字変換をかける
 - HTMLを読み込んで特定の属性が指定されている要素の属性を書き換える
 - などなど
+
+
+インストール
+--------
+NuGetで「Cartelet」を検索してインストール、または以下のコマンドをパッケージマネージャーコンソールで実行してください。
+
+```
+Install-Package Cartelet
+```
+
+- https://www.nuget.org/packages/Cartelet/
+- https://www.nuget.org/packages/Cartelet.Mvc/
+- https://www.nuget.org/packages/Cartelet.StylesheetExpander/
 
 サンプルコード
 ---------
