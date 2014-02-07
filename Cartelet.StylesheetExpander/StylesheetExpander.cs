@@ -22,6 +22,12 @@ namespace Cartelet.StylesheetExpander
         private DateTime _cssLastUpdatedAt;
         private String _cssPath;
 
+        /// <summary>
+        /// class属性を保持するためのコンテキストのストレージのキーです。
+        /// コンテキストのストレージにtrueをセットすることでclass属性を削除せず出力されるようになります。
+        /// </summary>
+        public const string ContextKeyPreserveClassNames = "Cartelet.StylesheetExpander:PreserveClassNames";
+
         static StylesheetExpander()
         {
             Expanders = new ConcurrentDictionary<String, StylesheetExpander>();
@@ -98,7 +104,7 @@ namespace Cartelet.StylesheetExpander
                 if (!_htmlFilter.AggregatedHandlers.ContainsKey("Cartelet.StylesheetExpander.ExecuteHandlers"))
                 {
                     _htmlFilter.AggregatedHandlers.Add("Cartelet.StylesheetExpander.ExecuteHandlers", ExecuteHandlers);
-                    _htmlFilter.AttributesFilter.Add((attrName, attrValue) => (attrName == "class") ? null : attrValue);
+                    _htmlFilter.AttributesFilter.Add((context, attrName, attrValue) => (attrName == "class" && !context.Items.Get<Boolean>(ContextKeyPreserveClassNames)) ? null : attrValue); // classを残す設定
                 }
             }
         }

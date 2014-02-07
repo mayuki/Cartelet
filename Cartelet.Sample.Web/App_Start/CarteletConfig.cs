@@ -33,6 +33,8 @@ namespace Cartelet.Sample.Web
                                                     // ここでは小文字化するWriterをセットする
                                                     var ctx = new CarteletContext(content, writer);
                                                     ctx.Writer = new LowerTextWriter(writer, ctx);
+                                                    // class属性を保持する
+                                                    //ctx.Items.Set(StylesheetExpander.StylesheetExpander.ContextKeyPreserveClassNames, true);
                                                     return ctx;
                                                 };
 

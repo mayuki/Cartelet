@@ -48,7 +48,7 @@ namespace Cartelet.Html
         /// (attrName, attrValue) => attrValue; で null を返すと属性を削除し、String.Emptyを返すと空文字列が出力されます。
         /// 書き換えが発生しなかった要素には適用されません。
         /// </summary>
-        public IList<Func<String, String, String>> AttributesFilter { get; set; }
+        public IList<Func<CarteletContext, String, String, String>> AttributesFilter { get; set; }
         /// <summary>
         /// Executeを実行する前に処理するハンドラーです。
         /// </summary>
@@ -75,7 +75,7 @@ namespace Cartelet.Html
             HandlersByTagName = new Dictionary<String, IList<CompiledSelectorHandler>>(StringComparer.Ordinal);
             HandlersById = new Dictionary<String, IList<CompiledSelectorHandler>>(StringComparer.Ordinal);
             TraceHandlers = new List<Func<CarteletContext, NodeInfo, Boolean>>();
-            AttributesFilter = new List<Func<String, String, String>>();
+            AttributesFilter = new List<Func<CarteletContext, String, String, String>>();
             PreExecuteHandlers = new List<Action<CarteletContext, NodeInfo>>();
             PostExecuteHandlers = new List<Action<CarteletContext, NodeInfo>>();
         }
@@ -294,7 +294,7 @@ namespace Cartelet.Html
                             foreach (var attr in node.Attributes)
                             {
                                 // 属性値フィルター
-                                var value = AttributesFilter.Aggregate(attr.Value, (current, filter) => filter(attr.Key, current));
+                                var value = AttributesFilter.Aggregate(attr.Value, (current, filter) => filter(context, attr.Key, current));
 
                                 if (!String.IsNullOrWhiteSpace(value))
                                 {
