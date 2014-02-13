@@ -48,8 +48,8 @@ namespace Cartelet.Sample.Web
             // その他フィルター
             htmlFilter.AddHandler("td", (context, node) =>
                                                 {
-                                                    node.BeforeContent = "<span style=\"font-size:xx-small;\">";
-                                                    node.AfterContent = "</span>";
+                                                    node.BeforeContent = "<div style=\"font-size:xx-small;\">";
+                                                    node.AfterContent = "</div>";
                                                     return true;
                                                 });
             htmlFilter.AddHandler(".to-lower", (context, node) =>

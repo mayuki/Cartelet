@@ -21,6 +21,10 @@ namespace Cartelet.Html
         /// </summary>
         public Int32 End { get; set; }
         /// <summary>
+        /// 閉じタグの開始位置
+        /// </summary>
+        public Int32 EndTagStart { get; set; }
+        /// <summary>
         /// 要素の終了位置
         /// </summary>
         public Int32 EndOfElement { get; set; }

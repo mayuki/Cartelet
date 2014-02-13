@@ -80,6 +80,7 @@ namespace Cartelet.Html
                 if (tagName[0] == '/')
                 {
                     // 閉じタグ
+                    var endTagStartPos = pos;
                     pos = tagNameEndPos;
                     if (node.Parent == null)
                     {
@@ -105,11 +106,13 @@ namespace Cartelet.Html
 
                         Trace.WriteLine(String.Format("Unmatched Tag: Line: {0}; TagName={1}; EndTagName={2}", line, node.TagNameUpper, tagNameUpper.Substring(1)));
 #endif
+                        node.EndTagStart = endTagStartPos;
                         node.EndOfElement = pos + 1;
                         node = node.Parent;
                     }
                     else
                     {
+                        node.EndTagStart = endTagStartPos;
                         node.EndOfElement = pos + 1;
                         node = node.Parent;
                     }

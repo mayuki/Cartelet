@@ -310,7 +310,7 @@ namespace Cartelet.Html
                         sb.Append(node.IsXmlStyleSelfClose ? " />" : ">");
 
                         // 開始タグのあとに差し込まれるコンテンツ
-                        if (!String.IsNullOrEmpty(node.BeforeContent))
+                        if (!node.IsXmlStyleSelfClose && !String.IsNullOrEmpty(node.BeforeContent))
                         {
                             sb.Append(node.BeforeContent);
                         }
@@ -331,17 +331,25 @@ namespace Cartelet.Html
                     ToHtmlString(context, child, ref start);
                 }
 
-                // 終了タグの前に差し込まれるコンテンツ
-                if (node.IsDirty && !String.IsNullOrEmpty(node.AfterContent))
+                // 終了タグの前に差し込まれるコンテンツがある
+                if (node.IsDirty && !node.IsXmlStyleSelfClose && !String.IsNullOrEmpty(node.AfterContent))
                 {
+                    // 終了タグ直前まで書く
+                    writer.Write(originalContent.Substring(start, node.EndTagStart - start));
+                    // 終了タグの前のやつ
                     writer.Write(node.AfterContent);
-                }
-
-                // 残りの部分
-                if (node.EndOfElement != -1)
-                {
-                    writer.Write(originalContent.Substring(start, node.EndOfElement - start));
+                    // 残りの部分
+                    writer.Write(originalContent.Substring(node.EndTagStart, node.EndOfElement - node.EndTagStart));
                     start = node.EndOfElement;
+                }
+                else
+                {
+                    // 残りの部分
+                    if (node.EndOfElement != -1)
+                    {
+                        writer.Write(originalContent.Substring(start, node.EndOfElement - start));
+                        start = node.EndOfElement;
+                    }
                 }
             }
 
