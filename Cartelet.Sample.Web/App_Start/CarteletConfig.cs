@@ -46,6 +46,12 @@ namespace Cartelet.Sample.Web
 
 
             // その他フィルター
+            htmlFilter.AddHandler("td", (context, node) =>
+                                                {
+                                                    node.BeforeContent = "<span style=\"font-size:xx-small;\">";
+                                                    node.AfterContent = "</span>";
+                                                    return true;
+                                                });
             htmlFilter.AddHandler(".to-lower", (context, node) =>
                                                {
                                                    // 小文字化Writerが有効になるようにContextのItemsにtrueをセットする

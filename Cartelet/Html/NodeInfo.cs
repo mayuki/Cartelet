@@ -54,6 +54,18 @@ namespace Cartelet.Html
         public IList<NodeInfo> ChildNodes { get; private set; }
 
         /// <summary>
+        /// タグの後に差し込まれる文字列
+        /// </summary>
+        public String BeforeContent { get { return _beforeContent; } set { _beforeContent = value; IsDirty = true; } }
+        private String _beforeContent;
+
+        /// <summary>
+        /// 終了タグの前に差し込まれる文字列
+        /// </summary>
+        public String AfterContent { get { return _afterContent; } set { _afterContent = value; IsDirty = true; } }
+        private String _afterContent;
+
+        /// <summary>
         /// 親となるノード
         /// </summary>
         public NodeInfo Parent

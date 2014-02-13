@@ -308,6 +308,13 @@ namespace Cartelet.Html
                         }
 
                         sb.Append(node.IsXmlStyleSelfClose ? " />" : ">");
+
+                        // 開始タグのあとに差し込まれるコンテンツ
+                        if (!String.IsNullOrEmpty(node.BeforeContent))
+                        {
+                            sb.Append(node.BeforeContent);
+                        }
+
                         writer.Write(sb.ToString());
                     }
                     else
@@ -322,6 +329,12 @@ namespace Cartelet.Html
                 foreach (var child in node.ChildNodes)
                 {
                     ToHtmlString(context, child, ref start);
+                }
+
+                // 終了タグの前に差し込まれるコンテンツ
+                if (node.IsDirty && !String.IsNullOrEmpty(node.AfterContent))
+                {
+                    writer.Write(node.AfterContent);
                 }
 
                 // 残りの部分
