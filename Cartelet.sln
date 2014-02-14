@@ -1,6 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30110.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cartelet", "Cartelet\Cartelet.csproj", "{0045DD60-B7D0-4858-9AFF-8419B766962C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cartelet.Tests", "Cartelet.Tests\Cartelet.Tests.csproj", "{040DA063-D4B1-4579-8EB3-0534A6C8BF7A}"
