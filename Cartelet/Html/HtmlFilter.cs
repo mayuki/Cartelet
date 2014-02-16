@@ -487,7 +487,7 @@ namespace Cartelet.Html
 
         private static String EscapeHtml(String value)
         {
-            //return value.Replace("&", "&amp;").Replace("<", "&gt;").Replace(">", "&lt;").Replace("\"", "&quot;");
+            //return value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
             return value.Replace("\"", "&quot;");
         }
     }

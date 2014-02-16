@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Web.Mvc;
 using Cartelet.Html;
 using ExCSS;
+using System.Text.RegularExpressions;
 
 namespace Cartelet.StylesheetExpander
 {
@@ -127,25 +128,70 @@ namespace Cartelet.StylesheetExpander
             if (styleDict != null)
             {
                 var newStyle = new StringBuilder();
+
+                var newPseudoBeforeStyle = new StringBuilder();
+                var newPseudoAfterStyle = new StringBuilder();
+                var pseudoBeforeDisplay = "";
+                var pseudoAfterDisplay = "";
+                var pseudoBeforeContent = "";
+                var pseudoAfterContent = "";
+
                 foreach (var style in styleDict)
                 {
                     // -cartelet-attribute-attrname: hoge; => attrname="hoge"
                     if (style.Key.StartsWith("-cartelet-attribute-"))
                     {
                         // とりあえず先頭がクォートだったら前後のは外す
-                        nodeInfo.Attributes[style.Key.Substring(20)] =
-                            style.Value.StartsWith("'")
-                                ? style.Value.Trim('\'')
-                                : style.Value.StartsWith("\"")
-                                    ? style.Value.Trim('"')
-                                    : style.Value;
+                        nodeInfo.Attributes[style.Key.Substring(20)] = StripQuotes(style.Value);
+                    }
+                    // -cartelet-pseudo-before-propname: ...
+                    else if (style.Key.StartsWith("-cartelet-pseudo-"))
+                    {
+                        if (style.Key.StartsWith("-cartelet-pseudo-before-"))
+                        {
+                            var key = style.Key.Substring(24);
+                            if (key == "display")
+                            {
+                                pseudoBeforeDisplay = style.Value;
+                                continue;
+                            }
+                            else if (key == "content")
+                            {
+                                pseudoBeforeContent = style.Value;
+                                continue;
+                            }
+                            newPseudoBeforeStyle
+                                    .Append(key)
+                                    .Append(':')
+                                    .Append(style.Value)
+                                    .Append(';');
+                        }
+                        else if (style.Key.StartsWith("-cartelet-pseudo-after-"))
+                        {
+                            var key = style.Key.Substring(23);
+                            if (key == "display")
+                            {
+                                pseudoAfterDisplay = style.Value;
+                                continue;
+                            }
+                            else if (key == "content")
+                            {
+                                pseudoAfterContent = style.Value;
+                                continue;
+                            }
+                            newPseudoAfterStyle
+                                .Append(key)
+                                .Append(':')
+                                .Append(style.Value)
+                                .Append(';');
+                        }
                     }
                     else
                     {
-                        newStyle.Append(style.Key);
-                        newStyle.Append(':');
-                        newStyle.Append(style.Value);
-                        newStyle.Append(';');
+                        newStyle.Append(style.Key)
+                                .Append(':')
+                                .Append(style.Value)
+                                .Append(';');
                     }
                 }
                 if (nodeInfo.Attributes.ContainsKey("style"))
@@ -154,9 +200,58 @@ namespace Cartelet.StylesheetExpander
                 }
                 nodeInfo.Attributes["style"] = newStyle.ToString();
                 styleDict.Clear();
+
+                // ::before/after を差し込む
+                if (!String.IsNullOrWhiteSpace(pseudoBeforeDisplay))
+                {
+                    var tagName = (pseudoBeforeDisplay == "block" ? "div" : "span");
+                    nodeInfo.BeforeContent += "<" + tagName + (newPseudoBeforeStyle.Length != 0 ? " style=\"" + EscapeHtml(newPseudoBeforeStyle.ToString()) + "\"" : "") + ">" + GetHtmlFromContentValue(pseudoBeforeContent) + "</" + tagName + ">";
+                }
+                if (!String.IsNullOrWhiteSpace(pseudoAfterDisplay))
+                {
+                    var tagName = (pseudoAfterDisplay == "block" ? "div" : "span");
+                    nodeInfo.AfterContent = "<" + tagName + (newPseudoAfterStyle.Length != 0 ? " style=\"" + EscapeHtml(newPseudoAfterStyle.ToString()) + "\"" : "") + ">" + GetHtmlFromContentValue(pseudoAfterContent) + "</" + tagName + ">" + nodeInfo.AfterContent;
+                }
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// contentプロパティをよしなにしてHTMLを取り出します。
+        /// </summary>
+        /// <param name="contentPropValue"></param>
+        /// <returns></returns>
+        private static String GetHtmlFromContentValue(String contentPropValue)
+        {
+            if (contentPropValue.StartsWith("-cartelet-raw("))
+            {
+                return StripQuotes(contentPropValue.Substring(14).TrimEnd(')'));
+            }
+            else
+            {
+                // クォートはずしてHTMLエスケープして返す
+                return EscapeHtml(StripQuotes(contentPropValue));
+            }
+        }
+
+        /// <summary>
+        /// シングルクォートまたはダブルクォートで囲まれている部分を外して取り出します。
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private static String StripQuotes(String value)
+        {
+            return value.StartsWith("'")
+                    ? value.Trim('\'')
+                    : value.StartsWith("\"")
+                        ? value.Trim('"')
+                        : value;
+        }
+
+        private static String EscapeHtml(String value)
+        {
+            return value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
         }
 
         private static Boolean IsStylesheetsChanged()
@@ -224,7 +319,21 @@ namespace Cartelet.StylesheetExpander
                     foreach (var selector in (styleRule.Selector is MultipleSelectorList ? styleRule.Selector as IEnumerable<SimpleSelector> : new [] { styleRule.Selector }))
                     {
                         // マッチした要素に対する処理のハンドラ。
-                        _htmlFilter.AddHandler("Cartelet.StylesheetExpander.ExecuteHandlers", selector.ToString(), (ctx, nodeInfo) =>
+                        var selectorString = selector.ToString();
+                        var isPseudoBefore = false;
+                        var isPseudoAfter = false;
+
+                        // ::before/::afterは特別扱いする
+                        var match = Regex.Match(selectorString, "::?(before|after)");
+                        if (match.Success)
+                        {
+                            // 一旦擬似要素のセレクタを外す (Selectorコンパイラーが処理できないので)
+                            selectorString = Regex.Replace(selectorString, "::?(before|after)", "");
+                            isPseudoBefore = (match.Groups[1].Value == "before");
+                            isPseudoAfter = (match.Groups[1].Value == "after");
+                        }
+
+                        _htmlFilter.AddHandler("Cartelet.StylesheetExpander.ExecuteHandlers", selectorString, (ctx, nodeInfo) =>
                         {
                             var styleDict = ctx.Items.Get<Dictionary<String, String>>("Cartelet.StylesheetExpander:StyleDictionary");
                             if (styleDict == null)
@@ -234,7 +343,15 @@ namespace Cartelet.StylesheetExpander
                             }
                             foreach (var declaration in declarations)
                             {
-                                styleDict[declaration.Key] = declaration.Value;
+                                // 擬似要素にマッチするように見せかけるために仮のプロパティにセットする
+                                styleDict[
+                                    (
+                                        isPseudoBefore ? "-cartelet-pseudo-before-" :
+                                        isPseudoAfter  ? "-cartelet-pseudo-after-" :
+                                        ""
+                                    ) +
+                                    declaration.Key
+                                ] = declaration.Value;
                             }
                             return true;
                         });

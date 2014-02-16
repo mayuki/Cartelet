@@ -16,3 +16,16 @@ img {
 
     vertical-align: middle;
 }
+
+h1::before {
+    content: '[pseudo-before(inline)]';
+    display: inline; /* span 要素として出力 */
+}
+
+h2::after {
+    /*
+     * -cartelet-raw は指定された文字列をそのままHTMLとして出力します。
+     */
+    content: -cartelet-raw('[pseudo-after(<span style="color:red">block</span>)]');
+    display: block; /* div 要素として出力 */
+}
