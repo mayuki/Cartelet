@@ -91,6 +91,7 @@ Selectors Level 3 ( http://www.w3.org/TR/css3-selectors/ )相当のセレクタ�
 
 - :not
 - 疑似要素 (::before, ::after, ::first-line, ::first-letter)
+    - StylesheetExpanderは::before/::afterを限定的に利用可能
 - UI要素の疑似クラス (:enabled, :checked, :indeterminate)
 - :empty 疑似クラス
 - :root 疑似クラス
