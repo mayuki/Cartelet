@@ -1,6 +1,6 @@
 Cartelet
 ========
-[![Build status](https://ci.appveyor.com/api/projects/status?id=ngcm4pv7wxhors7l)](https://ci.appveyor.com/project/cartelet)
+[![Build status](https://ci.appveyor.com/api/projects/status/ngcm4pv7wxhors7l)](https://ci.appveyor.com/project/mayuki/cartelet)
 
 Cartelet(カータレット)はHTMLをパースしてフィルターするためのライブラリです。
 
