@@ -317,7 +317,8 @@ namespace Cartelet.Html
                 // 親要素に子要素として追加
                 node.AppendChild(nodeInfo);
 
-                if (!isEndTagOrSelfClose)
+                // 終了タグでなくて、XMLスタイルの空要素でもない
+                if (!isEndTagOrSelfClose && !isXmlStyleSelfClose)
                 {
                     node = nodeInfo;
                 }

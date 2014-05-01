@@ -199,5 +199,30 @@ namespace Cartelet.Tests
             HtmlParser.ToHtmlString(rootNode, content, sw);
             sw.ToString().Is(content);
         }
+
+        [TestMethod]
+        public void Element_SelfClose_4()
+        {
+            var content = @"
+<datalist>
+<option label=hoge />
+<option label=hoge />
+<x-nazo label=hoge />
+</datalist>
+";
+            var rootNode = HtmlParser.Parse(content);
+            var sw = new StringWriter();
+            HtmlParser.ToHtmlString(rootNode, content, sw);
+            sw.ToString().Is(content);
+
+            rootNode.ChildNodes[0].TagName.Is("datalist");
+            rootNode.ChildNodes[0].ChildNodes.Count.Is(3);
+            rootNode.ChildNodes[0].ChildNodes[0].TagName.Is("option");
+            rootNode.ChildNodes[0].ChildNodes[0].IsXmlStyleSelfClose.IsTrue();
+            rootNode.ChildNodes[0].ChildNodes[1].TagName.Is("option");
+            rootNode.ChildNodes[0].ChildNodes[1].IsXmlStyleSelfClose.IsTrue();
+            rootNode.ChildNodes[0].ChildNodes[2].TagName.Is("x-nazo");
+            rootNode.ChildNodes[0].ChildNodes[2].IsXmlStyleSelfClose.IsTrue();
+        }
     }
 }
