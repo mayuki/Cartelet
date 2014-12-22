@@ -131,6 +131,8 @@ namespace Cartelet.StylesheetExpander
 
                 var newPseudoBeforeStyle = new StringBuilder();
                 var newPseudoAfterStyle = new StringBuilder();
+                var newPseudoBeforeAttrs = new StringBuilder();
+                var newPseudoAfterAttrs = new StringBuilder();
                 var pseudoBeforeDisplay = "";
                 var pseudoAfterDisplay = "";
                 var pseudoBeforeContent = "";
@@ -160,6 +162,17 @@ namespace Cartelet.StylesheetExpander
                                 pseudoBeforeContent = style.Value;
                                 continue;
                             }
+                            else if (key.StartsWith("-cartelet-attribute-"))
+                            {
+                                newPseudoBeforeAttrs
+                                    .Append(' ')
+                                    .Append(key.Substring(20))
+                                    .Append("=\"")
+                                    .Append(EscapeHtml(StripQuotes(style.Value)))
+                                    .Append('"');
+                                continue;
+                            }
+
                             newPseudoBeforeStyle
                                     .Append(key)
                                     .Append(':')
@@ -179,6 +192,17 @@ namespace Cartelet.StylesheetExpander
                                 pseudoAfterContent = style.Value;
                                 continue;
                             }
+                            else if (key.StartsWith("-cartelet-attribute-"))
+                            {
+                                newPseudoAfterAttrs
+                                    .Append(' ')
+                                    .Append(key.Substring(20))
+                                    .Append("=\"")
+                                    .Append(EscapeHtml(StripQuotes(style.Value)))
+                                    .Append('"');
+                                continue;
+                            }
+
                             newPseudoAfterStyle
                                 .Append(key)
                                 .Append(':')
@@ -204,17 +228,52 @@ namespace Cartelet.StylesheetExpander
                 // ::before/after を差し込む
                 if (!String.IsNullOrWhiteSpace(pseudoBeforeDisplay))
                 {
-                    var tagName = (pseudoBeforeDisplay == "block" ? "div" : "span");
-                    nodeInfo.BeforeContent += "<" + tagName + (newPseudoBeforeStyle.Length != 0 ? " style=\"" + EscapeHtml(newPseudoBeforeStyle.ToString()) + "\"" : "") + ">" + GetHtmlFromContentValue(pseudoBeforeContent) + "</" + tagName + ">";
+                    nodeInfo.BeforeContent += BuildPseudoContent(newPseudoBeforeStyle, pseudoBeforeDisplay, pseudoBeforeContent, newPseudoBeforeAttrs);
                 }
                 if (!String.IsNullOrWhiteSpace(pseudoAfterDisplay))
                 {
-                    var tagName = (pseudoAfterDisplay == "block" ? "div" : "span");
-                    nodeInfo.AfterContent = "<" + tagName + (newPseudoAfterStyle.Length != 0 ? " style=\"" + EscapeHtml(newPseudoAfterStyle.ToString()) + "\"" : "") + ">" + GetHtmlFromContentValue(pseudoAfterContent) + "</" + tagName + ">" + nodeInfo.AfterContent;
+                    nodeInfo.AfterContent = BuildPseudoContent(newPseudoAfterStyle, pseudoAfterDisplay, pseudoAfterContent, newPseudoAfterAttrs) + nodeInfo.AfterContent;
                 }
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// 擬似要素のHTMLを生成します
+        /// </summary>
+        /// <param name="pseudoStyle"></param>
+        /// <param name="pseudoDisplay"></param>
+        /// <param name="pseudoContent"></param>
+        /// <returns></returns>
+        private static String BuildPseudoContent(StringBuilder pseudoStyle, String pseudoDisplay, String pseudoContent, StringBuilder pseudoAttrs)
+        {
+            var style = (pseudoStyle.Length != 0 ? " style=\"" + EscapeHtml(pseudoStyle.ToString()) + "\"" : "");
+            if (pseudoContent.StartsWith("url("))
+            {
+                // url(...) はimg要素を出力する(alt属性は自動生成なので意図的につけない)
+                var html = new StringBuilder();
+                html.Append("<img src=\"");
+                html.Append(EscapeHtml(StripQuotes(pseudoContent.Substring(4).TrimEnd(')'))));
+                html.Append("\"");
+                html.Append(style);
+                html.Append(pseudoAttrs);
+                html.Append(" />");
+
+                if (pseudoDisplay == "block")
+                {
+                    return "<div>" + html.ToString() + "</div>";
+                }
+                else
+                {
+                    return html.ToString();
+                }
+            }
+            else
+            {
+                var tagName = (pseudoDisplay == "block" ? "div" : "span");
+                return "<" + tagName + style + ">" + GetHtmlFromContentValue(pseudoContent) + "</" + tagName + ">";
+            }
         }
 
         /// <summary>
@@ -226,6 +285,7 @@ namespace Cartelet.StylesheetExpander
         {
             if (contentPropValue.StartsWith("-cartelet-raw("))
             {
+                // -cartelet-raw(...) はHTMLをそのまま返す
                 return StripQuotes(contentPropValue.Substring(14).TrimEnd(')'));
             }
             else

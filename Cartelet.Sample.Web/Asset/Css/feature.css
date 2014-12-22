@@ -29,3 +29,25 @@ h2::after {
     content: -cartelet-raw('[pseudo-after(<span style="color:red">block</span>)]');
     display: block; /* div 要素として出力 */
 }
+
+.pseudo-image-inline::before {
+    content: url('http://farm9.staticflickr.com/8452/7978707698_55615f987d.jpg');
+    width: 64px;
+    -cartelet-attribute-width: 64;
+    display: inline;
+}
+.pseudo-image-block::before {
+    content: url('http://farm9.staticflickr.com/8452/7978707698_55615f987d.jpg');
+    width: 128px;
+    -cartelet-attribute-width: 128;
+    display: block;
+}
+
+.pseudo-image-raw-inline::before {
+    content: -cartelet-raw('<img src="http://farm9.staticflickr.com/8452/7978707698_55615f987d.jpg" width="100" alt="pseudo-image-raw" />');
+    display: inline;
+}
+.pseudo-image-raw-block::before {
+    content: -cartelet-raw('<img src="http://farm9.staticflickr.com/8452/7978707698_55615f987d.jpg" width="100" alt="pseudo-image-raw" />');
+    display: block;
+}
