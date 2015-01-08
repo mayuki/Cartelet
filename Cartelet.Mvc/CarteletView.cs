@@ -30,6 +30,14 @@ namespace Cartelet.Mvc
         [DebuggerHidden]
         public void Render(ViewContext viewContext, TextWriter writer)
         {
+            // HtmlFilterのファクトリがnullを返したらそのまま元々のViewEngineを呼び出して終わる
+            var htmlFilter = _htmlFilterFactory();
+            if (htmlFilter == null)
+            {
+                BaseView.Render(viewContext, writer);
+                return;
+            }
+
             var profiler = ViewProfilerFactory();
             profiler.Start();
 
@@ -54,7 +62,7 @@ namespace Cartelet.Mvc
 
                     // Filter/Rewrite HTML
                     profiler.OnBeforeFilter(ctx);
-                    _htmlFilterFactory().Execute(ctx, rootNode);
+                    htmlFilter.Execute(ctx, rootNode);
                     profiler.OnAfterFilter(ctx);
                 }
                 catch (Exception ex)
